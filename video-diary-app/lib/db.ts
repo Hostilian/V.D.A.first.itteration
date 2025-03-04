@@ -146,34 +146,61 @@ export const getVideoById = (id: string): Promise<VideoMetadata | null> => {
   if (Platform.OS === 'web') {
     // For web, find in in-memory array
     const video = webStorageVideos.find(v => v.id === id) || null;
-        resolve(video);
-        return true;
-      }
-    );
-  });
-};
+    return Promise.resolve(video);
+  }
 
-// Delete video by ID
-export const deleteVideo = (id: string): Promise<boolean> => {
   return new Promise((resolve) => {
     const db = openDB();
+    if (!db) return resolve(null);
+
+    let video: VideoMetadata | null = null;
 
     db.transaction(
-      (tx: SQLTransaction) => {
+      (tx: SQLite.SQLTransaction) => {
         tx.executeSql(
-          `DELETE FROM videos WHERE id = ?;`,
-          [id]
+          `SELECT * FROM videos WHERE id = ?;`,
+          [id],
+          (_: any, { rows }: DBRows) => {
+            if (rows.length > 0) {
+              const row = rows._array[0] as VideoRow;
+              video = {
+                id: row.id,
+                name: row.name,
+                description: row.description,
+                uri: row.uri,
+                duration: row.duration,
+                createdAt: row.created_at,
+              };
+            }
+          }
         );
       },
       (_: Error, error: Error) => {
-        console.error('Error deleting video:', error);
-        resolve(false);
-        return false;
-      },
-      () => {
-        resolve(true);
-        return true;
-      }
-    );
-  });
-};
+        console.error('Error fetching video:', error);
+        resolve(null);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        tx.executeSql(      (tx: SQLite.SQLTransaction) => {    db.transaction(        if (!db) return resolve(false);    const db = openDB();  return new Promise((resolve) => {    }    return Promise.resolve(true);    webStorageVideos = webStorageVideos.filter(v => v.id !== id);    // For web, remove from in-memory array  if (Platform.OS === 'web') {export const deleteVideo = (id: string): Promise<boolean> => {// Delete video by ID};  });    );      }        return true;        resolve(video);      () => {      },        return false;
