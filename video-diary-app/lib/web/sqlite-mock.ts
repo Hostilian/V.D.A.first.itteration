@@ -168,87 +168,85 @@ class Transaction {
                 const value = params[0];
 
                 const initialLength = inMemoryDatabase[tableName].length;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-};  return { ...inMemoryDatabase };export const getDatabaseDump = () => {// Helper function to get a dump of the database (for debugging)};  openDatabaseSync: (name: string) => new Database(name),  // Add support for the sync version as well  openDatabase: (name: string) => new Database(name),export const WebSQLite = {// Mock SQLite module}  }    });      delete inMemoryDatabase[key];    Object.keys(inMemoryDatabase).forEach(key => {  _reset() {  // Clear all data (for testing)    }    }      }        errorCallback(error);      if (errorCallback) {      console.error('[WebSQLite] Transaction error:', error);    } catch (error) {      }        successCallback();      if (successCallback) {      transactionFunction(tx);      const tx = new Transaction();    try {  ) {    successCallback?: () => void    errorCallback?: (error: any) => void,    transactionFunction: (tx: Transaction) => void,  transaction(    }    console.log(`[WebSQLite] Opened database: ${name}`);    this.name = name;  constructor(name: string) {    private name: string;class Database {// Mock Database class}  }    }      return false;      }        errorCallback(this, error);      if (errorCallback) {      console.error('[WebSQLite] Error executing SQL:', error);    } catch (error) {      return true;            }        successCallback(this, emptyResultSet);        };          }            item: () => null            length: 0,            _array: [],          rows: {        const emptyResultSet = {      if (successCallback && !normalizedSql.startsWith('select')) {      // Default success callback if operation doesn't return data            }        }          }            }              }                console.log(`[WebSQLite] Deleted ${removedCount} records from ${tableName}`);                                const removedCount = initialLength - inMemoryDatabase[tableName].length;                );                  record => record[field] !== value                inMemoryDatabase[tableName] = inMemoryDatabase[tableName].filter(
+                inMemoryDatabase[tableName] = inMemoryDatabase[tableName].filter(
+                  record => record[field] !== value
+                );
+                const removedCount = initialLength - inMemoryDatabase[tableName].length;
+
+                console.log(`[WebSQLite] Deleted ${removedCount} records from ${tableName}`);
+              }
+            }
+          }
+        }
+      }
+
+      // Default success callback if operation doesn't return data
+      if (successCallback && !normalizedSql.startsWith('select')) {
+        const emptyResultSet = {
+          rows: {
+            _array: [],
+            length: 0,
+            item: () => null
+          }
+        };
+        successCallback(this, emptyResultSet);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('[WebSQLite] Error executing SQL:', error);
+      if (errorCallback) {
+        errorCallback(this, error);
+      }
+      return false;
+    }
+  }
+}
+
+// Mock Database class
+class Database {
+  private name: string;
+
+  constructor(name: string) {
+    this.name = name;
+    console.log(`[WebSQLite] Opened database: ${name}`);
+  }
+
+  transaction(
+    transactionFunction: (tx: Transaction) => void,
+    errorCallback?: (error: any) => void,
+    successCallback?: () => void
+  ) {
+    try {
+      const tx = new Transaction();
+      transactionFunction(tx);
+      if (successCallback) {
+        successCallback();
+      }
+    } catch (error) {
+      console.error('[WebSQLite] Transaction error:', error);
+      if (errorCallback) {
+        errorCallback(error);
+      }
+    }
+  }
+
+  // Clear all data (for testing)
+  _reset() {
+    Object.keys(inMemoryDatabase).forEach(key => {
+      delete inMemoryDatabase[key];
+    });
+  }
+}
+
+// Mock SQLite module
+export const WebSQLite = {
+  openDatabase: (name: string) => new Database(name),
+  // Add support for the sync version as well
+  openDatabaseSync: (name: string) => new Database(name),
+};
+
+// Helper function to get a dump of the database (for debugging)
+export const getDatabaseDump = () => {
+  return { ...inMemoryDatabase };
+};

@@ -1,5 +1,5 @@
 // components/video/VideoPlayer.tsx
-import { ResizeMode, Video } from 'expo-av';
+import { Video as ExpoVideo, ResizeMode } from 'expo-av';
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { VideoMetadata } from '../../types';
@@ -26,7 +26,7 @@ export const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, shouldPlay = fa
 
   return (
     <View style={styles.container}>
-      <Video
+      <ExpoVideo
         source={{ uri: video.uri }}
         rate={1.0}
         volume={1.0}

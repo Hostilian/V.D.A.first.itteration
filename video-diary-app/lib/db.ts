@@ -35,18 +35,18 @@ export interface VideoRow {
   createdAt: string;
 }
 
+// Define transaction types
+interface SQLTransaction {
+  executeSql: (
+    sqlStatement: string,
+    params: any[],
+    successCallback?: (tx: SQLTransaction, resultSet: DBRows) => void,
+    errorCallback?: (tx: SQLTransaction, error: Error) => boolean
+  ) => void;
+}
+
 // Initialize the database
 export const initDatabase = async (): Promise<void> => {
-  return new Promise<void>((resolve, reject) => {
-    console.log(`Initializing database on platform: ${Platform.OS}`);
-
-    db.transaction(
-      tx => {
-        // Create videos table if it doesn't exist
-        tx.executeSql(
-          `CREATE TABLE IF NOT EXISTS videos (
-            id TEXT PRIMARY KEY,
-            name TEXT NOT NULL,
             description TEXT,
             uri TEXT NOT NULL,
             duration REAL NOT NULL,
@@ -57,7 +57,7 @@ export const initDatabase = async (): Promise<void> => {
             console.log('Database initialized successfully');
             resolve();
           },
-          (_, error) => {
+          (_: any, error: any) => {
             console.error('Error initializing database:', error);
             reject(error);
             return false;
