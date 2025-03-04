@@ -1,11 +1,18 @@
 import { useMutation } from '@tanstack/react-query';
 import { Video } from 'expo-av';
-import type { AVPlaybackStatus } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { useRef, useState } from 'react';
 import { Alert } from 'react-native';
 import { useVideoStore } from '../store/videoStore';
 import { cropVideo } from '../utils/video-processing';
+
+// Define types to replace the namespaces
+interface PlaybackStatus {
+  isLoaded: boolean;
+  positionMillis?: number;
+  durationMillis?: number;
+  isBuffering?: boolean;
+}
 
 type CropStep = 'SELECT' | 'CROP' | 'METADATA';
 
@@ -69,7 +76,7 @@ export default function useVideoCropping(onSuccess: () => void) {
   };
 
   // Video load handler
-  const handleVideoLoad = (status: AVPlaybackStatus) => {
+  const handleVideoLoad = (status: PlaybackStatus) => {
     if (status.durationMillis) {
       const durationSeconds = status.durationMillis / 1000;
       setVideoDuration(durationSeconds);
@@ -79,8 +86,8 @@ export default function useVideoCropping(onSuccess: () => void) {
   };
 
   // Update video position during playback
-  const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
-    if (status.isLoaded && !status.isBuffering) {
+  const handlePlaybackStatusUpdate = (status: PlaybackStatus) => {
+    if (status.isLoaded && !status.isBuffering && status.positionMillis !== undefined) {
       setCurrentPosition(status.positionMillis / 1000);
     }
   };
@@ -88,7 +95,11 @@ export default function useVideoCropping(onSuccess: () => void) {
   // Seek to a specific position
   const seekTo = (timeInSeconds: number) => {
     if (videoRef.current) {
-      videoRef.current.setPositionAsync(timeInSeconds * 1000);
+      try {
+        (videoRef.current as any).setPositionAsync(timeInSeconds * 1000);
+      } catch (error) {
+        console.error("Failed to set position:", error);
+      }
     }
   };
 

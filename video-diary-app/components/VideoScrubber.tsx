@@ -1,12 +1,26 @@
 import Slider from '@react-native-community/slider';
-import { Video, AVPlaybackStatus } from 'expo-av';
-import React, { forwardRef, useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import React, { forwardRef, useEffect, useRef, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
+
+// Define types to replace the namespaces
+interface PlaybackStatus {
+  isLoaded: boolean;
+  positionMillis?: number;
+  durationMillis?: number;
+  isBuffering?: boolean;
+}
+
+// Define the Video component interface we need
+interface VideoMethods {
+  setPositionAsync(positionMillis: number): Promise<void>;
+  playAsync(): Promise<void>;
+  pauseAsync(): Promise<void>;
+}
 
 interface VideoScrubberProps {
   videoUri?: string | null;
@@ -20,7 +34,7 @@ interface VideoScrubberProps {
   onDurationChange?: (duration: number) => void;
 }
 
-const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
+const VideoScrubber = forwardRef<ExpoVideo, VideoScrubberProps>(
   ({
     videoUri,
     startTime,
@@ -32,6 +46,16 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
     onVideoLoad,
     onDurationChange,
   }, ref) => {
+    // Ensure ref is treated as a mutable reference to a video component with the methods we need
+    const videoRef = useRef<VideoMethods | null>(null);
+
+    // When the ref changes, update our local ref
+    useEffect(() => {
+      if (ref && 'current' in ref) {
+        videoRef.current = ref.current as unknown as VideoMethods;
+      }
+    }, [ref]);
+
     const [videoDuration, setVideoDuration] = useState(100); // Default duration
     const [currentPosition, setCurrentPosition] = useState(0);
     const [isDragging, setIsDragging] = useState(false);
@@ -64,7 +88,7 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
       }
     }, [localStartTime, localEndTime]);
 
-    const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
+    const handlePlaybackStatusUpdate = (status: PlaybackStatus) => {
       if (!status.isLoaded || isDragging) return;
 
       if (status.positionMillis) {
@@ -78,7 +102,7 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
       }
     };
 
-    const handleVideoLoad = (status: AVPlaybackStatus) => {
+    const handleVideoLoad = (status: PlaybackStatus) => {
       if (!status.isLoaded) return;
 
       const duration = status.durationMillis ? status.durationMillis / 1000 : 0;
@@ -94,8 +118,12 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
     };
 
     const seekToPosition = async (timeInSeconds: number) => {
-      if (ref && 'current' in ref && ref.current) {
-        await ref.current.setPositionAsync(timeInSeconds * 1000);
+      if (videoRef.current) {
+        try {
+          await videoRef.current.setPositionAsync(timeInSeconds * 1000);
+        } catch (error) {
+          console.error("Failed to seek video:", error);
+        }
       }
     };
 
@@ -113,8 +141,12 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
       // Pause playback during scrubbing
       if (isPlaying) {
         setIsPlaying(false);
-        if (ref && 'current' in ref && ref.current) {
-          ref.current.pauseAsync();
+        if (videoRef.current) {
+          try {
+            videoRef.current.pauseAsync();
+          } catch (error) {
+            console.error("Failed to pause video:", error);
+          }
         }
       }
     };
@@ -133,14 +165,18 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
       // Pause playback during scrubbing
       if (isPlaying) {
         setIsPlaying(false);
-        if (ref && 'current' in ref && ref.current) {
-          ref.current.pauseAsync();
+        if (videoRef.current) {
+          try {
+            videoRef.current.pauseAsync();
+          } catch (error) {
+            console.error("Failed to pause video:", error);
+          }
         }
       }
     };
 
     const togglePlayback = async () => {
-      if (!ref || !('current' in ref) || !ref.current) return;
+      if (!videoRef.current) return;
 
       const newIsPlaying = !isPlaying;
       setIsPlaying(newIsPlaying);
@@ -150,9 +186,17 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
         if (currentPosition < localStartTime || currentPosition >= localEndTime) {
           await seekToPosition(localStartTime);
         }
-        await ref.current.playAsync();
+        try {
+          await videoRef.current.playAsync();
+        } catch (error) {
+          console.error("Failed to play video:", error);
+        }
       } else {
-        await ref.current.pauseAsync();
+        try {
+          await videoRef.current.pauseAsync();
+        } catch (error) {
+          console.error("Failed to pause video:", error);
+        }
       }
     };
 
@@ -163,22 +207,22 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
     };
 
     // Calculate positions for the selection highlight overlay as numbers (not strings)
-    const getSelectionStyle = (): ViewStyle => {
+    const getSelectionStyle = () => {
       const startPercent = (localStartTime / Math.max(1, videoDuration)) * 100;
       const endPercent = (localEndTime / Math.max(1, videoDuration)) * 100;
       const widthPercent = endPercent - startPercent;
 
       return {
-        left: `${startPercent}%` as any, // Cast to any to make TypeScript happy
-        width: `${widthPercent}%` as any, // Cast to any to make TypeScript happy
+        left: `${startPercent}%` as any,
+        width: `${widthPercent}%` as any,
       };
     };
 
     // Same for the progress indicator
-    const getProgressIndicatorStyle = (): ViewStyle => {
+    const getProgressIndicatorStyle = () => {
       const positionPercent = (currentPosition / Math.max(1, videoDuration)) * 100;
       return {
-        left: `${positionPercent}%` as any, // Cast to any to make TypeScript happy
+        left: `${positionPercent}%` as any,
       };
     };
 

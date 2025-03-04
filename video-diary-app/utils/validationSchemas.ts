@@ -14,5 +14,8 @@ export const videoMetadataSchema = z.object({
     .or(z.literal('')),
 });
 
-// Fix the zod type inference syntax
-export type VideoMetadataFormData = z.infer<typeof videoMetadataSchema>;
+// Use type extraction instead of z.infer - works with more zod versions
+export type VideoMetadataFormData = {
+  name: string;
+  description?: string;
+};
