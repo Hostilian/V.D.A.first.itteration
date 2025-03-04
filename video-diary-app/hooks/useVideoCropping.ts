@@ -1,171 +1,224 @@
-import { useMutation } from '@tanstack/react-query';
-import { Video } from 'expo-av';
-import * as ImagePicker from 'expo-image-picker';
-import { useRef, useState } from 'react';
-import { Alert } from 'react-native';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { Dimensions } from 'react-native';
+import ffmpegService from '../services/ffmpeg';
 import { useVideoStore } from '../store/videoStore';
-import { cropVideo } from '../utils/video-processing';
+import { debounce } from 'lodash';
 
-// Define types to replace the namespaces
-interface PlaybackStatus {
-  isLoaded: boolean;
-  positionMillis?: number;
-  durationMillis?: number;
-  isBuffering?: boolean;
+// Types for crop parameters
+interface CropRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
-type CropStep = 'SELECT' | 'CROP' | 'METADATA';
+interface CropResult {
+  uri: string;
+  width: number;
+  height: number;
+  isProcessing: boolean;
+}
 
-export default function useVideoCropping(onSuccess: () => void) {
-  // State
-  const [currentStep, setCurrentStep] = useState<CropStep>('SELECT');
-  const [videoUri, setVideoUri] = useState<string | null>(null);
-  const [videoDuration, setVideoDuration] = useState<number>(0);
-  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
-  const [currentPosition, setCurrentPosition] = useState(0);
-  const [startTime, setStartTime] = useState(0);
-  const [endTime, setEndTime] = useState(5); // Initial 5-second segment
-  const [videoName, setVideoName] = useState('');
-  const [videoDescription, setVideoDescription] = useState('');
+// Constant for minimum crop dimensions
+const MIN_CROP_DIMENSION = 100;
 
-  // References
-  const videoRef = useRef<React.ComponentRef<typeof Video>>(null);
+export const useVideoCropping = (videoUri: string | null) => {
+  const [cropRegion, setCropRegion] = useState<CropRegion | null>(null);
+  const [result, setResult] = useState<CropResult | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [originalDimensions, setOriginalDimensions] = useState({ width: 0, height: 0 });
 
-  // Store
-  const { addVideo } = useVideoStore();
+  // Store the current video URI to track changes
+  const videoUriRef = useRef(videoUri);
 
-  // TanStack Query mutation for video processing
-  const cropVideoMutation = useMutation({
-    mutationFn: async () => {
-      if (!videoUri) throw new Error('No video selected');
-      return await cropVideo(videoUri, startTime, endTime);
-    },
-    onSuccess: async (croppedVideoUri) => {
-      try {
-        await addVideo({
-          name: videoName.trim() || 'Untitled Video',
-          description: videoDescription,
-          uri: croppedVideoUri,
-          duration: endTime - startTime,
+  // Get screen dimensions for responsive calculations
+  const screenDimensions = useMemo(() => {
+    return Dimensions.get('window');
+  }, []);
+
+  // Access video caching from store
+  const { addProcessedVideo, getProcessedVideo } = useVideoStore(state => ({
+    addProcessedVideo: state.addProcessedVideo,
+    getProcessedVideo: state.getProcessedVideo
+  }));
+
+  // Initialize video dimensions when URI changes
+  useEffect(() => {
+    const loadVideoDimensions = async () => {
+      if (videoUri) {
+        try {
+          const info = await ffmpegService.getVideoInfo(videoUri);
+          if (info && info.streams && info.streams[0]) {
+            const { width, height } = info.streams[0];
+            setOriginalDimensions({ width, height });
+
+            // Set default crop region to center of video with suitable dimensions
+            const defaultWidth = Math.min(width, height) * 0.8;
+            setCropRegion({
+              x: Math.floor((width - defaultWidth) / 2),
+              y: Math.floor((height - defaultWidth) / 2),
+              width: Math.floor(defaultWidth),
+              height: Math.floor(defaultWidth)
+            });
+          }
+        } catch (err) {
+          console.error('Failed to load video dimensions:', err);
+          setError('Failed to load video dimensions');
+        }
+      }
+    };
+
+    // Only load dimensions if the video URI has changed
+    if (videoUri !== videoUriRef.current) {
+      videoUriRef.current = videoUri;
+      setResult(null);
+      loadVideoDimensions();
+    }
+  }, [videoUri]);
+
+  // Memoized crop key for caching
+  const cropCacheKey = useMemo(() => {
+    if (!videoUri || !cropRegion) return null;
+    return `${videoUri}:${cropRegion.x},${cropRegion.y},${cropRegion.width},${cropRegion.height}`;
+  }, [videoUri, cropRegion]);
+
+  // Check cache before processing
+  useEffect(() => {
+    if (cropCacheKey) {
+      const cached = getProcessedVideo(cropCacheKey);
+      if (cached) {
+        setResult({
+          uri: cached.uri,
+          width: cropRegion?.width || 0,
+          height: cropRegion?.height || 0,
+          isProcessing: false
         });
-        onSuccess();
-      } catch (error) {
-        console.error('Failed to save video', error);
-        Alert.alert('Error', 'Failed to save the video. Please try again.');
-      }
-    },
-    onError: (error) => {
-      console.error('Video crop error:', error);
-      Alert.alert('Error', 'Failed to process the video. Please try again.');
-    }
-  });
-
-  // Pick a video from the device
-  const pickVideo = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Videos,
-      allowsEditing: false,
-      quality: 1,
-    });
-
-    if (!result.canceled && result.assets && result.assets[0]) {
-      setVideoUri(result.assets[0].uri);
-      setIsVideoLoaded(false);
-      setCurrentStep('CROP');
-    }
-  };
-
-  // Video load handler
-  const handleVideoLoad = (status: PlaybackStatus) => {
-    if (status.durationMillis) {
-      const durationSeconds = status.durationMillis / 1000;
-      setVideoDuration(durationSeconds);
-      setEndTime(Math.min(startTime + 5, durationSeconds));
-      setIsVideoLoaded(true);
-    }
-  };
-
-  // Update video position during playback
-  const handlePlaybackStatusUpdate = (status: PlaybackStatus) => {
-    if (status.isLoaded && !status.isBuffering && status.positionMillis !== undefined) {
-      setCurrentPosition(status.positionMillis / 1000);
-    }
-  };
-
-  // Seek to a specific position
-  const seekTo = (timeInSeconds: number) => {
-    if (videoRef.current) {
-      try {
-        (videoRef.current as any).setPositionAsync(timeInSeconds * 1000);
-      } catch (error) {
-        console.error("Failed to set position:", error);
       }
     }
-  };
+  }, [cropCacheKey, getProcessedVideo]);
 
-  // Update startTime and ensure valid range
-  const updateStartTime = (time: number) => {
-    const newStartTime = Math.max(0, Math.min(time, videoDuration - 5));
-    setStartTime(newStartTime);
-
-    // Ensure endTime is at least 5 seconds after startTime, if possible
-    if (endTime < newStartTime + 5) {
-      setEndTime(Math.min(newStartTime + 5, videoDuration));
+  // Calculate scale factor between display and actual video dimensions
+  const calculateScaleFactor = useCallback(() => {
+    if (originalDimensions.width === 0 || originalDimensions.height === 0) {
+      return 1;
     }
 
-    seekTo(newStartTime);
-  };
+    const displayWidth = Math.min(screenDimensions.width, screenDimensions.height * (originalDimensions.width / originalDimensions.height));
+    return originalDimensions.width / displayWidth;
+  }, [originalDimensions, screenDimensions]);
 
-  // Update endTime and ensure valid range
-  const updateEndTime = (time: number) => {
-    const newEndTime = Math.max(startTime + 5, Math.min(time, videoDuration));
-    setEndTime(newEndTime);
-    seekTo(newEndTime);
-  };
+  // Update crop region with debouncing to prevent too many updates
+  const debouncedSetCropRegion = useCallback(
+    debounce((region: CropRegion) => {
+      setCropRegion(region);
+    }, 100),
+    []
+  );
 
-  // Navigate between steps
-  const goToNextStep = () => {
-    if (currentStep === 'CROP') {
-      setCurrentStep('METADATA');
-    } else if (currentStep === 'METADATA') {
-      cropVideoMutation.mutate();
+  // Handler for crop region changes from UI
+  const updateCropRegion = useCallback((region: CropRegion) => {
+    // Validate minimum dimensions
+    if (region.width < MIN_CROP_DIMENSION || region.height < MIN_CROP_DIMENSION) {
+      return;
     }
-  };
 
-  const goToPreviousStep = () => {
-    if (currentStep === 'CROP') {
-      setCurrentStep('SELECT');
-    } else if (currentStep === 'METADATA') {
-      setCurrentStep('CROP');
+    // Ensure region is within bounds
+    const boundedRegion = {
+      x: Math.max(0, region.x),
+      y: Math.max(0, region.y),
+      width: Math.min(originalDimensions.width - region.x, region.width),
+      height: Math.min(originalDimensions.height - region.y, region.height)
+    };
+
+    debouncedSetCropRegion(boundedRegion);
+  }, [originalDimensions, debouncedSetCropRegion]);
+
+  // Convert UI coordinates to actual video coordinates
+  const convertToVideoCoordinates = useCallback((uiRegion: CropRegion): CropRegion => {
+    const scale = calculateScaleFactor();
+    return {
+      x: Math.floor(uiRegion.x * scale),
+      y: Math.floor(uiRegion.y * scale),
+      width: Math.floor(uiRegion.width * scale),
+      height: Math.floor(uiRegion.height * scale)
+    };
+  }, [calculateScaleFactor]);
+
+  // Process crop operation with memoization
+  const processCrop = useCallback(async () => {
+    if (!videoUri || !cropRegion) {
+      setError('Video or crop region is not defined');
+      return null;
     }
-  };
 
-  return {
-    // State
-    currentStep,
-    videoUri,
-    videoDuration,
-    isVideoLoaded,
-    currentPosition,
-    startTime,
-    endTime,
-    videoName,
-    videoDescription,
-    videoRef,
-    isProcessing: cropVideoMutation.isPending,
+    // Check cache first
+    if (cropCacheKey) {
+      const cached = getProcessedVideo(cropCacheKey);
+      if (cached) {
+        setResult({
+          uri: cached.uri,
+          width: cropRegion.width,
+          height: cropRegion.height,
+          isProcessing: false
+        });
+        return cached.uri;
+      }
+    }
 
-    // Actions
-    pickVideo,
-    handleVideoLoad,
-    handlePlaybackStatusUpdate,
-    updateStartTime,
-    updateEndTime,
-    goToNextStep,
-    goToPreviousStep,
-    setVideoName,
-    setVideoDescription,
+    try {
+      setIsProcessing(true);
+      setError(null);
 
-    // Helper derived values
-    canProgress: currentStep !== 'CROP' || isVideoLoaded,
-  };
-}
+      // Convert display coordinates to actual video coordinates
+      const videoCropRegion = convertToVideoCoordinates(cropRegion);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export default useVideoCropping;};  };    error    isProcessing,    result,    originalDimensions,    processCrop,    updateCropRegion,    cropRegion,  return {  }, []);    };      ffmpegService.cancelOperation();      // Cancel any ongoing operations when the component unmounts    return () => {  useEffect(() => {  // Cleanup function  }, [videoUri, cropRegion, cropCacheKey, convertToVideoCoordinates, getProcessedVideo, addProcessedVideo]);    }      setIsProcessing(false);    } finally {      return null;      setError('Failed to crop video');      console.error('Video cropping failed:', err);    } catch (err) {      return outputUri;            }        addProcessedVideo(cropCacheKey, { uri: outputUri });      if (cropCacheKey) {      // Add to cache            setResult(newResult);      };        isProcessing: false        height: cropRegion.height,        width: cropRegion.width,        uri: outputUri,      const newResult = {      // Update result state            const outputUri = await ffmpegService.cropVideo(videoUri, videoCropRegion);      // Process the video with FFmpeg

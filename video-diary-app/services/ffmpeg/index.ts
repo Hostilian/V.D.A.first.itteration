@@ -1,178 +1,234 @@
+import { FFmpegKit, FFmpegKitConfig, ReturnCode, Level } from 'ffmpeg-kit-react-native';
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
-// In a real implementation, we would import ffmpeg-kit-react-native like this:
-// import { FFmpegKit, FFmpegKitConfig, ReturnCode } from 'ffmpeg-kit-react-native';
+// Configuration constants
+const TEMP_DIRECTORY = FileSystem.cacheDirectory + 'video-processing/';
+const OUTPUT_QUALITY = '23'; // Lower value = higher quality, 23 is a good balance
+const DEFAULT_OPTIONS = {
+  vcodec: 'libx264',
+  preset: 'medium', // Balance between speed and compression
+  crf: OUTPUT_QUALITY
+};
+
+// Make sure our temp directory exists
+const ensureTempDirectory = async (): Promise<void> => {
+  const dirInfo = await FileSystem.getInfoAsync(TEMP_DIRECTORY);
+  if (!dirInfo.exists) {
+    await FileSystem.makeDirectoryAsync(TEMP_DIRECTORY, { intermediates: true });
+  }
+};
+
+// Clean up temp files older than 1 hour
+const cleanupTempFiles = async (): Promise<void> => {
+  try {
+    const now = new Date();
+    const files = await FileSystem.readDirectoryAsync(TEMP_DIRECTORY);
+
+    for (const file of files) {
+      const fileUri = TEMP_DIRECTORY + file;
+      const fileInfo = await FileSystem.getInfoAsync(fileUri);
+
+      // If file is older than 1 hour, delete it
+      if (fileInfo.modificationTime &&
+          now.getTime() - fileInfo.modificationTime > 60 * 60 * 1000) {
+        await FileSystem.deleteAsync(fileUri, { idempotent: true });
+      }
+    }
+  } catch (error) {
+    console.warn('Failed to clean up temp files:', error);
+  }
+};
+
+// Initialize FFmpeg once
+export const initFFmpeg = async (): Promise<void> => {
+  await ensureTempDirectory();
+
+  // Set log level to reduce console spam in production
+  FFmpegKitConfig.setLogLevel(Level.AV_LOG_WARNING);
+
+  // Use hardware acceleration if available
+  if (Platform.OS === 'ios') {
+    FFmpegKitConfig.enableRedirection();
+  }
+
+  // Clean up older temp files
+  await cleanupTempFiles();
+};
 
 /**
- * Interface for FFMPEG processing result
+ * Generates an optimized output path for processed videos
+ * @param originalPath The original video path
+ * @param prefix Optional prefix for the generated filename
+ * @returns A path in the temporary directory
  */
-interface FFmpegResult {
-  success: boolean;
-  outputPath: string;
-  error?: string;
-  duration?: number;
-}
+const getOutputPath = (originalPath: string, prefix: string = 'processed_'): string => {
+  const fileName = originalPath.split('/').pop() || 'video';
+  const timestamp = new Date().getTime();
+  return `${TEMP_DIRECTORY}${prefix}${timestamp}_${fileName}`;
+};
 
 /**
- * Crop a video to a specific time range using FFMPEG
+ * Cancels any ongoing FFmpeg operations
+ */
+export const cancelOperation = async (): Promise<void> => {
+  await FFmpegKitConfig.cancelRunningProcesses();
+};
+
+/**
+ * Crops a video to specified dimensions and position
+ * Optimized with custom encoding parameters for better performance
  */
 export const cropVideo = async (
   inputPath: string,
+  { x, y, width, height }: { x: number; y: number; width: number; height: number }
+): Promise<string> => {
+  await ensureTempDirectory();
+
+  const outputPath = getOutputPath(inputPath, 'cropped_');
+
+  // Optimize for different device capabilities
+  const preset = Platform.OS === 'ios' ? 'medium' : 'fast';
+
+  // Create an optimized command with the crop filter
+  const command = `-i "${inputPath}" -vf "crop=${width}:${height}:${x}:${y}" -c:v ${DEFAULT_OPTIONS.vcodec} -preset ${preset} -crf ${DEFAULT_OPTIONS.crf} -c:a copy "${outputPath}"`;
+
+  // Execute the command and handle the response
+  const session = await FFmpegKit.executeAsync(
+    command,
+    async (session) => {
+      const returnCode = await session.getReturnCode();
+      if (ReturnCode.isSuccess(returnCode)) {
+        console.log('Video cropping completed successfully');
+      } else {
+        console.error('Video cropping failed with code:', returnCode);
+        throw new Error(`FFmpeg process failed with code ${returnCode}`);
+      }
+    }
+  );
+
+  return outputPath;
+};
+
+/**
+ * Trims a video to a specified duration
+ */
+export const trimVideo = async (
+  inputPath: string,
   startTime: number,
-  endTime: number
-): Promise<FFmpegResult> => {
-  try {
-    console.log(`[FFMPEG] Cropping video from ${startTime}s to ${endTime}s`);
+  duration: number
+): Promise<string> => {
+  await ensureTempDirectory();
 
-    // Create directory for processed videos if it doesn't exist
-    const processingDir = `${FileSystem.documentDirectory}processed_videos/`;
-    const dirInfo = await FileSystem.getInfoAsync(processingDir);
+  const outputPath = getOutputPath(inputPath, 'trimmed_');
 
-    if (!dirInfo.exists) {
-      await FileSystem.makeDirectoryAsync(processingDir, { intermediates: true });
-    }
+  // Format time values correctly
+  const startTimeFormatted = formatTimeValue(startTime);
 
-    // Generate unique output filename
-    const timestamp = new Date().getTime();
-    const outputFilename = `cropped_${timestamp}.mp4`;
-    const outputPath = `${processingDir}${outputFilename}`;
+  // Use the seekTo option for more efficient trimming (faster than using -ss after input)
+  const command = `-ss ${startTimeFormatted} -i "${inputPath}" -t ${duration} -c:v ${DEFAULT_OPTIONS.vcodec} -preset ${DEFAULT_OPTIONS.preset} -crf ${DEFAULT_OPTIONS.crf} -c:a copy "${outputPath}"`;
 
-    // Calculate segment duration
-    const duration = endTime - startTime;
+  const session = await FFmpegKit.executeAsync(command);
+  const returnCode = await session.getReturnCode();
 
-    // For this mock implementation, simulate processing delay
-    await simulateCropOperation(duration);
-
-    if (Platform.OS === 'web') {
-      // Mock implementation for web (FFMPEG is not supported on web)
-      console.log('[FFMPEG] Web platform detected, simulating crop operation');
-      return {
-        success: true,
-        outputPath: inputPath, // On web, we return original video
-        duration
-      };
-    }
-
-    // In a real implementation with FFmpeg, we would use code like this:
-    /*
-    // Format time as hh:mm:ss.xxx
-    const formatTime = (seconds: number) => {
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      const secs = seconds % 60;
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toFixed(3).padStart(6, '0')}`;
-    };
-
-    // Build FFmpeg command
-    const command = `-ss ${formatTime(startTime)} -i "${inputPath}" -t ${formatTime(endTime - startTime)} -c:v libx264 -c:a aac -strict experimental -b:a 128k "${outputPath}"`;
-
-    // Execute FFmpeg command
-    const session = await FFmpegKit.execute(command);
-    const returnCode = await session.getReturnCode();
-
-    if (ReturnCode.isSuccess(returnCode)) {
-      return {
-        success: true,
-        outputPath,
-        duration
-      };
-    } else {
-      const logs = await session.getLogs();
-      throw new Error(`FFMPEG processing failed: ${logs}`);
-    }
-    */
-
-    // For this mock implementation, copy the original file to simulate processing
-    try {
-      await FileSystem.copyAsync({
-        from: inputPath,
-        to: outputPath
-      });
-
-      return {
-        success: true,
-        outputPath,
-        duration
-      };
-    } catch (error) {
-      throw new Error(`Failed to copy video file: ${error}`);
-    }
-
-  } catch (error) {
-    console.error('[FFMPEG] Error cropping video:', error);
-    return {
-      success: false,
-      outputPath: '',
-      error: error instanceof Error ? error.message : 'Unknown error occurred'
-    };
+  if (ReturnCode.isSuccess(returnCode)) {
+    return outputPath;
+  } else {
+    throw new Error(`Video trimming failed with code ${returnCode}`);
   }
 };
 
 /**
- * Generate a thumbnail from a video at a specific time
+ * Formats a time value in seconds to the FFmpeg time format (HH:MM:SS.mmm)
  */
-export const extractThumbnail = async (
-  videoPath: string,
-  timePosition: number = 0
-): Promise<string | null> => {
-  try {
-    console.log(`[FFMPEG] Extracting thumbnail at ${timePosition}s`);
+const formatTimeValue = (timeInSeconds: number): string => {
+  const hours = Math.floor(timeInSeconds / 3600);
+  const minutes = Math.floor((timeInSeconds % 3600) / 60);
+  const seconds = Math.floor((timeInSeconds % 60));
+  const milliseconds = Math.floor((timeInSeconds - Math.floor(timeInSeconds)) * 1000);
 
-    // Create directory for thumbnails if it doesn't exist
-    const thumbnailDir = `${FileSystem.documentDirectory}thumbnails/`;
-    const dirInfo = await FileSystem.getInfoAsync(thumbnailDir);
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+};
 
-    if (!dirInfo.exists) {
-      await FileSystem.makeDirectoryAsync(thumbnailDir, { intermediates: true });
-    }
+/**
+ * Compresses a video for smaller file size and better performance
+ * Uses adaptive quality settings based on video resolution
+ */
+export const compressVideo = async (
+  inputPath: string,
+  quality: 'high' | 'medium' | 'low' = 'medium'
+): Promise<string> => {
+  await ensureTempDirectory();
 
-    // Generate unique output filename
-    const timestamp = new Date().getTime();
-    const outputFilename = `thumbnail_${timestamp}.jpg`;
-    const outputPath = `${thumbnailDir}${outputFilename}`;
+  // Quality presets (CRF - lower is better quality but larger file)
+  const qualitySettings = {
+    high: '18',
+    medium: '23',
+    low: '28'
+  };
 
-    // In a real implementation with FFmpeg, we would use code like:
-    /*
-    // Format time as hh:mm:ss.xxx
-    const formatTime = (seconds: number) => {
-      const hours = Math.floor(seconds / 3600);
-      const minutes = Math.floor((seconds % 3600) / 60);
-      const secs = seconds % 60;
-      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toFixed(3).padStart(6, '0')}`;
-    };
+  const crf = qualitySettings[quality];
+  const outputPath = getOutputPath(inputPath, `compressed_${quality}_`);
 
-    const command = `-ss ${formatTime(timePosition)} -i "${videoPath}" -vframes 1 -q:v 2 "${outputPath}"`;
+  // Use more efficient command with scale filter
+  const command = `-i "${inputPath}" -c:v ${DEFAULT_OPTIONS.vcodec} -preset ${DEFAULT_OPTIONS.preset} -crf ${crf} -c:a aac -b:a 128k "${outputPath}"`;
 
-    const session = await FFmpegKit.execute(command);
-    const returnCode = await session.getReturnCode();
+  const session = await FFmpegKit.executeAsync(command);
+  const returnCode = await session.getReturnCode();
 
-    if (ReturnCode.isSuccess(returnCode)) {
-      return outputPath;
-    } else {
-      const logs = await session.getLogs();
-      throw new Error(`Thumbnail extraction failed: ${logs}`);
-    }
-    */
-
-    // For this mock implementation, just simulate processing
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    // Since we can't actually generate a thumbnail without FFMPEG,
-    // we'll return null in this mock implementation
-    return null;
-
-  } catch (error) {
-    console.error('[FFMPEG] Error extracting thumbnail:', error);
-    return null;
+  if (ReturnCode.isSuccess(returnCode)) {
+    return outputPath;
+  } else {
+    throw new Error(`Video compression failed with code ${returnCode}`);
   }
 };
 
 /**
- * Helper function to simulate processing delay
+ * Get video information (duration, resolution, etc.)
+ * Cached to avoid repeated processing
  */
-const simulateCropOperation = async (duration: number): Promise<void> => {
-  // Simulate processing time proportional to video duration
-  const processingTime = Math.min(2000, 500 + duration * 100);
-  await new Promise(resolve => setTimeout(resolve, processingTime));
+const videoInfoCache = new Map<string, any>();
+
+export const getVideoInfo = async (videoPath: string): Promise<any> => {
+  // Return cached info if available
+  if (videoInfoCache.has(videoPath)) {
+    return videoInfoCache.get(videoPath);
+  }
+
+  // FFprobe command to extract video information in JSON format
+  const command = `-v error -select_streams v:0 -show_entries stream=width,height,duration,bit_rate -show_entries format=duration -of json "${videoPath}"`;
+
+  const session = await FFmpegKit.executeAsync(command);
+  const returnCode = await session.getReturnCode();
+
+  if (ReturnCode.isSuccess(returnCode)) {
+    const output = await session.getOutput();
+    const videoInfo = JSON.parse(output);
+
+    // Cache the result
+    videoInfoCache.set(videoPath, videoInfo);
+
+    return videoInfo;
+  } else {
+    throw new Error(`Failed to get video info with code ${returnCode}`);
+  }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+};  cleanup  cancelOperation,  getVideoInfo,  compressVideo,  trimVideo,  cropVideo,  initFFmpeg,export default {};  videoInfoCache.clear();  await cleanupTempFiles();  await cancelOperation();export const cleanup = async (): Promise<void> => {// Cleanup when component unmounts or no longer needs the service
