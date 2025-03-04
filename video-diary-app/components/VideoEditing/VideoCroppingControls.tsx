@@ -1,26 +1,23 @@
+import { MaterialIcons } from '@expo/vector-icons';
+import { Video as ExpoVideo } from 'expo-av';
+import * as Haptics from 'expo-haptics';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  View,
-  StyleSheet,
-  PanResponder,
-  Dimensions,
-  Text,
-  TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Platform
+  Dimensions,
+  PanResponder,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { Video } from 'expo-av';
-import Svg, { Rect, Defs, Mask } from 'react-native-svg';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
-  withTiming,
-  withSpring,
-  runOnJS
+  withTiming
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
-import { MaterialIcons } from '@expo/vector-icons';
+import Svg, { Defs, Mask, Rect } from 'react-native-svg';
 import { useVideoCropping } from '../../hooks/useVideoCropping';
 import { cropParametersSchema } from '../../lib/validation';
 
@@ -47,7 +44,7 @@ export const VideoCroppingControls: React.FC<VideoCroppingControlsProps> = ({
   onCancel
 }) => {
   // Video player reference
-  const videoRef = useRef<Video>(null);
+  const videoRef = useRef<ExpoVideo>(null);
 
   // Animation values
   const buttonOpacity = useSharedValue(0);
@@ -433,7 +430,7 @@ export const VideoCroppingControls: React.FC<VideoCroppingControlsProps> = ({
     <View style={styles.container}>
       {/* Video player */}
       <View style={styles.videoContainer} onLayout={handleVideoLayout}>
-        <Video
+        <ExpoVideo
           ref={videoRef}
           source={{ uri: videoUri }}
           style={styles.video}
@@ -620,12 +617,10 @@ const styles = StyleSheet.create({
     borderRadius: 5,
   },
   instructionsText: {
+    textAlign: 'center',
+    fontSize: 16,
+    color: '#fff',
+  },
+});
 
-
-
-
-
-
-
-
-export default VideoCroppingControls;});  },    textAlign: 'center',    fontSize: 16,    color: '#fff',
+export default VideoCroppingControls;

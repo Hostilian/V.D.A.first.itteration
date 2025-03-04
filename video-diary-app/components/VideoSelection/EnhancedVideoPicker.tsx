@@ -1,5 +1,6 @@
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
+import * as Audio from 'expo-av';
 import * as Haptics from 'expo-haptics';
 import * as ImagePicker from 'expo-image-picker';
 import * as MediaLibrary from 'expo-media-library';
@@ -136,6 +137,11 @@ export const EnhancedVideoPicker: React.FC<EnhancedVideoPickerProps> = ({
     }
   }, [permissionStatus, requestPermissions, loadVideos]);
 
+  const requestMicrophonePermissions = async () => {
+    const { status } = await Audio.Audio.requestPermissionsAsync();
+    return status === 'granted';
+  };
+
   const launchCamera = useCallback(async () => {
     try {
       const cameraPermission = await ImagePicker.requestCameraPermissionsAsync();
@@ -152,9 +158,9 @@ export const EnhancedVideoPicker: React.FC<EnhancedVideoPickerProps> = ({
         return;
       }
 
-      const microphonePermission = await ImagePicker.requestMicrophonePermissionsAsync();
+      const microphonePermission = await requestMicrophonePermissions();
 
-      if (microphonePermission.status !== 'granted') {
+      if (!microphonePermission) {
         Alert.alert(
           'Microphone Permission Required',
           'This app needs access to your microphone to record videos with audio.',
@@ -193,7 +199,7 @@ export const EnhancedVideoPicker: React.FC<EnhancedVideoPickerProps> = ({
           onVideoSelect(selectedAsset.uri);
 
           // Navigate to cropping screen (assuming you have this route)
-          navigation.navigate('VideoCropping', { videoUri: selectedAsset.uri });
+          navigation.navigate('/video/crop', { videoUri: selectedAsset.uri });
         } catch (error) {
           console.error('Video validation failed:', error);
           Alert.alert('Invalid Video', 'The recorded video does not meet the requirements.');
@@ -239,7 +245,7 @@ export const EnhancedVideoPicker: React.FC<EnhancedVideoPickerProps> = ({
       onVideoSelect(video.uri);
 
       // Navigate to cropping screen
-      navigation.navigate('VideoCropping', { videoUri: video.uri });
+      navigation.navigate('/video/crop', { videoUri: video.uri });
     } catch (error) {
       console.error('Error selecting video:', error);
       Alert.alert('Error', 'Failed to select video. Please try again.');
@@ -485,3 +491,4 @@ const styles = StyleSheet.create({
 });
 
 export default EnhancedVideoPicker;
+

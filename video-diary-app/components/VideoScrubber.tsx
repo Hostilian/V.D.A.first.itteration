@@ -34,7 +34,7 @@ interface VideoScrubberProps {
   onDurationChange?: (duration: number) => void;
 }
 
-const VideoScrubber = forwardRef<ExpoVideo, VideoScrubberProps>(
+const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
   ({
     videoUri,
     startTime,
@@ -47,7 +47,7 @@ const VideoScrubber = forwardRef<ExpoVideo, VideoScrubberProps>(
     onDurationChange,
   }, ref) => {
     // Ensure ref is treated as a mutable reference to a video component with the methods we need
-    const videoRef = useRef<VideoMethods | null>(null);
+    const videoRef = useRef<Video>(null);
 
     // When the ref changes, update our local ref
     useEffect(() => {

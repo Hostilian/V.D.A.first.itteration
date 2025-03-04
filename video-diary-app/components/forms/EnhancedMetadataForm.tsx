@@ -1,28 +1,27 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { MaterialIcons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Haptics from 'expo-haptics';
+import * as Location from 'expo-location';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
-  Keyboard
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
 } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
-import * as Location from 'expo-location';
-import * as Haptics from 'expo-haptics';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, {
-  useSharedValue,
+  Easing,
   useAnimatedStyle,
-  withSpring,
-  withTiming,
+  useSharedValue,
   withSequence,
-  Easing
+  withTiming
 } from 'react-native-reanimated';
 import { useFormValidation, videoMetadataSchema } from '../../lib/validation';
 import { ErrorBoundary } from '../ErrorHandling/ErrorBoundary';
@@ -37,7 +36,7 @@ interface TagInputProps {
 
 const TagInput: React.FC<TagInputProps> = ({ tags = [], addTag, removeTag, error }) => {
   const [input, setInput] = useState('');
-  const inputRef = useRef<TextInput>(null);
+  const inputRef = useRef<NativeTextInput>(null);
 
   const handleSubmit = useCallback(() => {
     if (input.trim()) {
@@ -426,225 +425,221 @@ export const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
               onPress={handleFormSubmit}
               disabled={isProcessing}
             >
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export default EnhancedMetadataForm;});  }    fontWeight: '600'    fontSize: 16,    color: 'white',  errorButtonText: {  },    borderRadius: 8    paddingHorizontal: 24,    paddingVertical: 12,    backgroundColor: '#3498db',  errorButton: {  },    marginBottom: 24    textAlign: 'center',    color: '#666',    fontSize: 16,  errorMessage: {  },    marginBottom: 8    marginTop: 16,    fontWeight: 'bold',    fontSize: 20,  errorTitle: {  },    backgroundColor: '#fff'    padding: 20,    alignItems: 'center',    justifyContent: 'center',    flex: 1,  errorContainer: {  },    zIndex: 10    backgroundColor: 'rgba(255, 255, 255, 0.9)',    alignItems: 'center',    justifyContent: 'center',    bottom: 0,    right: 0,    left: 0,    top: 0,    position: 'absolute',  successOverlay: {  },    fontWeight: '600'    fontSize: 16,    color: 'white',  buttonText: {  },    opacity: 0.7  disabledButton: {  },    flex: 2    backgroundColor: '#2ecc71',  submitButton: {  },    marginRight: 8    backgroundColor: '#95a5a6',  cancelButton: {  },    justifyContent: 'center'    alignItems: 'center',    borderRadius: 8,    paddingVertical: 14,    flex: 1,  button: {  },    marginTop: 16    justifyContent: 'space-between',    flexDirection: 'row',  buttonContainer: {  },    flex: 1    marginLeft: 8,    color: '#555',    fontSize: 14,  locationText: {  },    borderRadius: 8    backgroundColor: '#f2f2f2',    padding: 12,    marginTop: 12,    alignItems: 'center',    flexDirection: 'row',  locationDisplay: {  },    fontWeight: '600'    fontSize: 16,    marginLeft: 8,    color: 'white',  locationButtonText: {  },    paddingHorizontal: 16    paddingVertical: 12,    borderRadius: 8,    backgroundColor: '#3498db',    justifyContent: 'center',    alignItems: 'center',    flexDirection: 'row',  locationButton: {  },    marginBottom: 16  locationContainer: {  },    color: '#333'    fontSize: 16,  dateText: {  },    marginBottom: 16    backgroundColor: '#f9f9f9',    padding: 12,    borderRadius: 8,    borderColor: '#ddd',    borderWidth: 1,    alignItems: 'center',    justifyContent: 'space-between',    flexDirection: 'row',  datePickerButton: {  },    marginRight: 6    color: 'white',  tagText: {  },    marginBottom: 8    marginRight: 8,    borderRadius: 20,    paddingVertical: 6,    paddingHorizontal: 12,    backgroundColor: '#3498db',    alignItems: 'center',    flexDirection: 'row',  tag: {  },    marginTop: 8    flexWrap: 'wrap',    flexDirection: 'row',  tagsContainer: {  },    justifyContent: 'center'    alignItems: 'center',    borderRadius: 8,    height: 42,    width: 42,    backgroundColor: '#3498db',  addTagButton: {  },    marginRight: 8    marginBottom: 0,    flex: 1,  tagInput: {  },    marginBottom: 8    alignItems: 'center',    flexDirection: 'row',  tagInputRow: {  },    marginBottom: 16  tagInputContainer: {  },    marginBottom: 16    marginTop: -12,    textAlign: 'right',    color: '#999',    fontSize: 12,  charCount: {  },    textAlignVertical: 'top'    minHeight: 100,  textArea: {  },    marginBottom: 16    marginTop: -12,    fontSize: 14,    color: '#e74c3c',  errorText: {  },    borderColor: '#e74c3c'  inputError: {  },    backgroundColor: '#f9f9f9'    marginBottom: 16,    fontSize: 16,    padding: 12,    borderRadius: 8,    borderColor: '#ddd',    borderWidth: 1,  input: {  },    color: '#333'    marginBottom: 8,    fontWeight: '600',    fontSize: 16,  inputLabel: {  },    paddingBottom: 40    padding: 20,  scrollContent: {  },    flex: 1  scrollContainer: {  },    backgroundColor: '#fff'    flex: 1,  container: {const styles = StyleSheet.create({// Define styles};  );    </ErrorBoundary>      </KeyboardAvoidingView>        </ScrollView>          </View>            </TouchableOpacity>              )}                <Text style={styles.buttonText}>Save</Text>              ) : (                <ActivityIndicator color="#fff" size="small" />              {isProcessing ? (
+              {isProcessing ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.buttonText}>Save</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </ErrorBoundary>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff'
+  },
+  errorButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600'
+  },
+  errorButton: {
+    backgroundColor: '#3498db',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    marginBottom: 24
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 8
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginTop: 16,
+    marginBottom: 8
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: '#fff'
+  },
+  successOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    zIndex: 10
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600'
+  },
+  disabledButton: {
+    opacity: 0.7
+  },
+  submitButton: {
+    flex: 2,
+    backgroundColor: '#2ecc71'
+  },
+  cancelButton: {
+    backgroundColor: '#95a5a6',
+    marginRight: 8
+  },
+  button: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 16
+  },
+  locationText: {
+    fontSize: 14,
+    color: '#555',
+    marginLeft: 8,
+    flex: 1
+  },
+  locationDisplay: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#f2f2f2',
+    borderRadius: 8
+  },
+  locationButtonText: {
+    color: 'white',
+    marginLeft: 8,
+    fontSize: 16,
+    fontWeight: '600'
+  },
+  locationButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#3498db',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16
+  },
+  locationContainer: {
+    marginBottom: 16
+  },
+  dateText: {
+    fontSize: 16,
+    color: '#333'
+  },
+  datePickerButton: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    backgroundColor: '#f9f9f9',
+    marginBottom: 16
+  },
+  tagText: {
+    color: 'white',
+    marginRight: 6
+  },
+  tag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3498db',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginRight: 8,
+    marginBottom: 8
+  },
+  tagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    marginTop: 8
+  },
+  addTagButton: {
+    backgroundColor: '#3498db',
+    width: 42,
+    height: 42,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  tagInput: {
+    flex: 1,
+    marginBottom: 0,
+    marginRight: 8
+  },
+  tagInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8
+  },
+  tagInputContainer: {
+    marginBottom: 16
+  },
+  charCount: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'right',
+    marginTop: -12,
+    marginBottom: 16
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: 'top'
+  },
+  errorText: {
+    color: '#e74c3c',
+    fontSize: 14,
+    marginTop: -12,
+    marginBottom: 16
+  },
+  inputError: {
+    borderColor: '#e74c3c'
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 16,
+    backgroundColor: '#f9f9f9'
+  },
+  inputLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 8,
+    color: '#333'
+  },
+  scrollContent: {
+    padding: 20,
+    paddingBottom: 40
+  },
+  scrollContainer: {
+    flex: 1
+  }
+});

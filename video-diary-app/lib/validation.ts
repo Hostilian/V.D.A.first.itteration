@@ -48,16 +48,9 @@ export const videoFileSchema = z.object({
 
 // Video metadata validation
 export const videoMetadataSchema = z.object({
-  title: z.string()
-    .min(MIN_TITLE_LENGTH, { message: ValidationErrorMessages.tooShort('Title', MIN_TITLE_LENGTH) })
-    .max(MAX_TITLE_LENGTH, { message: ValidationErrorMessages.tooLong('Title', MAX_TITLE_LENGTH) }),
-  description: z.string()
-    .max(MAX_DESCRIPTION_LENGTH, { message: ValidationErrorMessages.tooLong('Description', MAX_DESCRIPTION_LENGTH) })
-    .optional(),
-  tags: z.array(z.string()
-    .max(MAX_TAG_LENGTH, { message: ValidationErrorMessages.tooLong('Tag', MAX_TAG_LENGTH) }))
-    .max(MAX_TAGS, { message: `Cannot add more than ${MAX_TAGS} tags` })
-    .optional(),
+  title: z.string().min(1, 'Title is required').max(100),
+  description: z.string().max(500).optional(),
+  tags: z.array(z.string()).min(0).max(20),
   recordedAt: z.date().optional(),
   location: z.object({
     latitude: z.number().optional(),

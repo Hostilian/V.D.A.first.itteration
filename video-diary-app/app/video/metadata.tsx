@@ -50,9 +50,13 @@ export default function VideoMetadataScreen() {
 
       // Save the video with metadata to the store
       await addVideo({
-        name: data.name.trim() || 'Untitled Video',
-        description: data.description || '', // Ensure it's always a string
+        id: uuidv4(),
+        title: data.name.trim() || 'Untitled Video', // Changed 'name' to 'title'
+        description: data.description || '',
+        tags: [], // Empty array as default for required field
         uri: videoUri,
+        createdAt: new Date(),
+        modifiedAt: new Date(),
         duration: videoDuration,
       });
 

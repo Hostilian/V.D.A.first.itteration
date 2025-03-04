@@ -4,21 +4,21 @@ import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
-  Alert,
-  Dimensions,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    ActivityIndicator,
+    Alert,
+    Dimensions,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
 } from 'react-native';
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withTiming,
+    useAnimatedStyle,
+    useSharedValue,
+    withTiming,
 } from 'react-native-reanimated';
 import VideoScrubber from '../../components/VideoScrubber';
-import useVideoProcessing from '../../hooks/useVideoProcessing';
+import { useVideoProcessing } from '../../hooks/useVideoProcessing';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -43,7 +43,7 @@ export default function VideoCropScreen() {
     isProcessing,
     progress,
   } = useVideoProcessing({
-    onSuccess: (result) => {
+    onSuccess: (result: ProcessingResult) => {
       router.push({
         pathname: '/video/metadata',
         params: {
