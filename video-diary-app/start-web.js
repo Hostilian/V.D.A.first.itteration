@@ -102,24 +102,28 @@ async function startWeb() {
             directory: path.join(__dirname, 'web-template'),
             watch: true,
             serveIndex: true,
-            setHeaders: (res, filePath) => {
-              const mimeType = mime.getType(filePath);
-              if (mimeType) {
-                res.setHeader('Content-Type', mimeType);
+            staticOptions: {
+              setHeaders: (res, filePath) => {
+                const mimeType = mime.getType(filePath);
+                if (mimeType) {
+                  res.setHeader('Content-Type', mimeType);
+                }
               }
-            },
+            }
           },
           {
             directory: path.join(__dirname, 'assets'),
             publicPath: '/assets',
             watch: true,
             serveIndex: true,
-            setHeaders: (res, filePath) => {
-              const mimeType = mime.getType(filePath);
-              if (mimeType) {
-                res.setHeader('Content-Type', mimeType);
+            staticOptions: {
+              setHeaders: (res, filePath) => {
+                const mimeType = mime.getType(filePath);
+                if (mimeType) {
+                  res.setHeader('Content-Type', mimeType);
+                }
               }
-            },
+            }
           }
         ],
         devMiddleware: {
