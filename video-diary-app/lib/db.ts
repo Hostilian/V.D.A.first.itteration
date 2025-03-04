@@ -95,6 +95,16 @@ export const saveVideo = (video: VideoMetadata): Promise<boolean> => {
             resolve(true);
           },
           (_: SQLTransaction, error: Error) => {
+            console.error('Error saving video:', error);
+            reject(error);
+            return false;
+          }
+        );
+      },
+      (error: Error) => {
+        console.error('Transaction error during save:', error);
+        reject(error);
+      }
     );
   });
 };
@@ -105,11 +115,11 @@ export const getVideos = (): Promise<VideoMetadata[]> => {
     const videos: VideoMetadata[] = [];
 
     db.transaction(
-      tx => {
+      (tx: SQLTransaction) => {
         tx.executeSql(
           `SELECT * FROM videos ORDER BY createdAt DESC;`,
           [],
-          (_, { rows }) => {
+          (_: SQLTransaction, { rows }: DBRows) => {
             for (let i = 0; i < rows.length; i++) {
               const row = rows.item(i);
               videos.push({
@@ -123,14 +133,14 @@ export const getVideos = (): Promise<VideoMetadata[]> => {
             }
             resolve(videos);
           },
-          (_, error) => {
+          (_: SQLTransaction, error: Error) => {
             console.error('Error fetching videos:', error);
             reject(error);
             return false;
           }
         );
       },
-      error => {
+      (error: Error) => {
         console.error('Transaction error during fetch:', error);
         reject(error);
       }
@@ -142,22 +152,12 @@ export const getVideos = (): Promise<VideoMetadata[]> => {
 export const getVideoById = (id: string): Promise<VideoMetadata | null> => {
   return new Promise((resolve, reject) => {
     db.transaction(
-      tx => {
+      (tx: SQLTransaction) => {
         tx.executeSql(
           `SELECT * FROM videos WHERE id = ?;`,
           [id],
-          (_, { rows }) => {
+          (_: SQLTransaction, { rows }: DBRows) => {
             if (rows.length > 0) {
-              const row = rows.item(0);
-              resolve({
-                id: row.id,
-                name: row.name,
-                description: row.description || '',
-                uri: row.uri,
-                duration: row.duration,
-                createdAt: row.createdAt,
-              });
-            } else {
               resolve(null);
             }
           },
