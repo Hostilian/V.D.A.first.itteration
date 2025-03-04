@@ -320,13 +320,13 @@ const styles = StyleSheet.create({
     top: 6,
     width: 3,
     height: 12,
-
-
-
-
-
-
-
+    backgroundColor: '#ff3b30',
+    borderRadius: 1.5,
+    marginLeft: -1.5,
+  },
+  controlsContainer: {
+    marginTop: 10,
+  },
 
 
 
