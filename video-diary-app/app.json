@@ -40,6 +40,10 @@
           "photosPermission": "The app accesses your photos to select videos for cropping."
         }
       ]
-    ]
+    ],
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    }
   }
 }
