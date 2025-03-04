@@ -1,112 +1,106 @@
 // store/videoStore.ts
-import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
-import { getVideosFromDB, insertVideo, updateVideo as updateVideoDB, deleteVideo as deleteVideoDB } from '../lib/db';
-import { VideoMetadata } from '../types';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import { executeQuery } from '../database';
 
-interface VideoState {
-  videos: VideoMetadata[];
-  isLoading: boolean;
-  error: string | null;
-  fetchVideos: () => Promise<void>;
-  addVideo: (video: VideoMetadata) => Promise<void>;
-  updateVideo: (id: string, updates: { name?: string; description?: string }) => Promise<void>;
-  deleteVideo: (id: string) => Promise<void>;
-  getVideo: (id: string) => VideoMetadata | undefined;
+export interface VideoEntry {
+  id: string;
+  name: string;
+  description: string;
+  uri: string;
+  createdAt: number;
+  duration: number;
+  thumbnailUri?: string;
 }
 
-// Create a store with persistence for web
+interface VideoState {
+  videos: VideoEntry[];
+  isLoading: boolean;
+  currentVideo: VideoEntry | null;
+
+  // Actions
+  fetchVideos: () => Promise<void>;
+  addVideo: (video: Omit<VideoEntry, 'id' | 'createdAt'>) => Promise<void>;
+  deleteVideo: (id: string) => Promise<void>;
+  setCurrentVideo: (id: string | null) => void;
+}
+
 export const useVideoStore = create<VideoState>()(
   persist(
     (set, get) => ({
       videos: [],
       isLoading: false,
-      error: null,
+      currentVideo: null,
 
       fetchVideos: async () => {
-        set({ isLoading: true, error: null });
+        set({ isLoading: true });
         try {
-          if (Platform.OS === 'web') {
-            // For web, we'll use the persisted state
-            // No additional action needed as persist middleware handles it
-          } else {
-            // For native platforms, fetch from SQLite
-            const videos = await getVideosFromDB();
-            set({ videos, isLoading: false });
-          }
+          const results = await executeQuery(
+            'SELECT * FROM videos ORDER BY createdAt DESC'
+          );
+          set({ videos: results, isLoading: false });
         } catch (error) {
           console.error('Error fetching videos:', error);
-          set({ error: 'Failed to fetch videos', isLoading: false });
+          set({ isLoading: false });
         }
       },
 
-      addVideo: async (video: VideoMetadata) => {
+      addVideo: async (videoData) => {
+        set({ isLoading: true });
         try {
-          if (Platform.OS !== 'web') {
-            await insertVideo(video);
-          }
+          const id = Date.now().toString();
+          const newVideo: VideoEntry = {
+            ...videoData,
+            id,
+            createdAt: Date.now(),
+          };
 
-          set((state) => ({
-            videos: [video, ...state.videos],
-          }));
+          await executeQuery(
+            'INSERT INTO videos (id, name, description, uri, createdAt, duration, thumbnailUri) VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [
+              newVideo.id,
+              newVideo.name,
+              newVideo.description,
+              newVideo.uri,
+              newVideo.createdAt,
+              newVideo.duration,
+              newVideo.thumbnailUri || null,
+            ]
+          );
+
+          const videos = [...get().videos, newVideo];
+          set({ videos, isLoading: false });
         } catch (error) {
           console.error('Error adding video:', error);
-          set({ error: 'Failed to add video' });
+          set({ isLoading: false });
         }
       },
 
-      updateVideo: async (id: string, updates: { name?: string; description?: string }) => {
+      deleteVideo: async (id) => {
+        set({ isLoading: true });
         try {
-          if (Platform.OS !== 'web') {
-            await updateVideoDB(id, updates);
-          }
-
-          set((state) => ({
-            videos: state.videos.map((video) =>
-              video.id === id ? { ...video, ...updates } : video
-            ),
-          }));
-        } catch (error) {
-          console.error('Error updating video:', error);
-          set({ error: 'Failed to update video' });
-        }
-      },
-
-      deleteVideo: async (id: string) => {
-        try {
-          if (Platform.OS !== 'web') {
-            await deleteVideoDB(id);
-          }
-
-          set((state) => ({
-            videos: state.videos.filter((video) => video.id !== id),
-          }));
+          await executeQuery('DELETE FROM videos WHERE id = ?', [id]);
+          const videos = get().videos.filter((video) => video.id !== id);
+          set({ videos, isLoading: false });
         } catch (error) {
           console.error('Error deleting video:', error);
-          set({ error: 'Failed to delete video' });
+          set({ isLoading: false });
         }
       },
 
-      getVideo: (id: string) => {
-        return get().videos.find((video) => video.id === id);
+      setCurrentVideo: (id) => {
+        if (id === null) {
+          set({ currentVideo: null });
+          return;
+        }
+        const video = get().videos.find((v) => v.id === id) || null;
+        set({ currentVideo: video });
       },
     }),
     {
-      name: 'video-store',
-      storage: {
-        getItem: async (name) => {
-          const value = await AsyncStorage.getItem(name);
-          return value ?? null;
-        },
-        setItem: async (name, value) => {
-          await AsyncStorage.setItem(name, value);
-        },
-        removeItem: async (name) => {
-          await AsyncStorage.removeItem(name);
-        },
-      },
+      name: 'video-diary-storage',
+      storage: createJSONStorage(() => AsyncStorage),
     }
   )
 );

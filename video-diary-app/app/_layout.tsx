@@ -1,59 +1,39 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
-import React, { useEffect } from 'react';
+import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { initDatabase } from '../lib/db';
-import { useVideoStore } from '../store/videoStore';
 
-// Create query client outside of component
-const queryClient = new QueryClient();
+// Create a client for React Query
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-export default function AppLayout() {
-  const fetchVideos = useVideoStore((state) => state.fetchVideos);
-
-  useEffect(() => {
-    const setupApp = async () => {
-      try {
-        // Initialize database (now handles web/native differences)
-        await initDatabase();
-
-        // Fetch videos from database
-        await fetchVideos();
-      } catch (error) {
-        console.error('Error setting up app:', error);
-      }
-    };
-
-    setupApp();
-  }, [fetchVideos]);
-
+export default function Layout() {
   return (
-    <SafeAreaProvider>
-      <QueryClientProvider client={queryClient}>
-        <Stack>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+          }}
+        >
+          <Stack.Screen name="index" />
+          <Stack.Screen name="video/[id]" />
           <Stack.Screen
-            name="index"
+            name="video/crop"
             options={{
-              title: "Video Diary",
-              headerShown: true,
-            }}
-          />
-          <Stack.Screen
-            name="details/[id]"
-            options={{
-              title: "Video Details",
-              headerShown: true,
-            }}
-          />
-          <Stack.Screen
-            name="edit/[id]"
-            options={{
-              title: "Edit Video",
-              headerShown: true,
+              presentation: 'modal',
+              animation: 'slide_from_bottom',
             }}
           />
         </Stack>
-      </QueryClientProvider>
-    </SafeAreaProvider>
+      </SafeAreaProvider>
+    </QueryClientProvider>
   );
 }

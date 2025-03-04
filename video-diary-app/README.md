@@ -1,50 +1,113 @@
-# Welcome to your Expo app 👋
+# Video Diary App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A React Native mobile application that allows users to import videos, crop specific 5-second segments, add metadata, and save them for future reference.
 
-## Get started
+![Video Diary App Screenshots](./screenshots.png)
 
-1. Install dependencies
+## Features
 
+- **Import Videos**: Select videos from your device
+- **Crop Videos**: Create precise 5-second segments using an interactive scrubber
+- **Add Metadata**: Include a name and description for each video entry
+- **Video Library**: Browse and play your saved video diary entries
+- **Persistent Storage**: All video entries persist between app sessions
+
+## Tech Stack
+
+- **Expo**: React Native development framework
+- **Expo Router**: File-based navigation system
+- **Zustand**: State management with persistent storage
+- **TanStack Query**: Asynchronous state management
+- **SQLite**: Local database for structured data storage
+- **Expo Video**: Video playback capabilities
+- **React Native Reanimated**: Advanced animations
+- **TypeScript**: Type safety throughout the application
+
+## Installation
+
+### Prerequisites
+
+- Node.js (v16 or newer)
+- npm or Yarn
+- Expo CLI (`npm install -g expo-cli`)
+
+### Setup
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/video-diary-app.git
+   cd video-diary-app
+   ```
+
+2. Install dependencies:
    ```bash
    npm install
+   # or
+   yarn install
    ```
 
-2. Start the app
-
+3. Start the development server:
    ```bash
-    npx expo start
+   npm start
+   # or
+   yarn start
    ```
 
-In the output, you'll find options to open the app in a
+4. Run on a device or emulator:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
 
-## Get a fresh project
 
-When you're ready, run:
 
-```bash
-npm run reset-project
-```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
 
-## Learn more
 
-To learn more about developing your project with Expo, look at the following resources:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
 
-## Join the community
 
-Join our community of developers creating universal apps.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+This project is licensed under the MIT License - see the LICENSE file for details.## License5. Open a Pull Request4. Push to the branch (`git push origin feature/amazing-feature`)3. Commit your changes (`git commit -m 'Add some amazing feature'`)2. Create your feature branch (`git checkout -b feature/amazing-feature`)1. Fork the repository## Contributing```└── utils/                  # Utility functions├── store/                  # Zustand state management│   └── web/                # Web specific implementations├── lib/                    # Platform-specific code├── hooks/                  # Custom React hooks├── database/               # SQLite setup and queries├── constants/              # App constants and theme├── components/             # Reusable UI components├── assets/                 # App icons and images│       └── crop.tsx        # Video cropping workflow│       ├── [id].tsx        # Video details screen│   └── video/              # Video-related screens│   ├── index.tsx           # Home/video list screen│   ├── _layout.tsx         # Main navigation layout├── app/                    # Expo Router screens
+video-diary-app/```## Project Structure- Delete the entry if needed- See the name, description, and other details- View the cropped video with playback controls### Video Details4. **Save**: Your cropped video is saved to your diary3. **Add Details**: Enter a name and description2. **Crop Video**: Use sliders to select a 5-second segment1. **Select Video**: Choose a video from your device### Creating a New Entry- Use the + button to create a new entry- Tap on an entry to view its details- Browse your saved video diary entries### Main Screen## Usage Guide   - Press 'i' for iOS simulator   - Press 'a' for Android emulator   - Scan the QR code with Expo Go app (Android) or Camera app (iOS)

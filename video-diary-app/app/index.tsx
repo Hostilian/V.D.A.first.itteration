@@ -1,62 +1,170 @@
-// app/index.tsx
-import { MaterialIcons } from '@expo/vector-icons';
-import React, { useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, Text, View } from 'react-native';
-import { CropModal } from '../components/modals/CropModal';
-import { VideoListItem } from '../components/video/VideoListItem';
-import { useVideos } from '../hooks/useVideos';
-import { VideoMetadata } from '../types';
+import { ResizeMode, Video } from 'expo-av';
+import { useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import React, { useEffect, useState } from 'react';
+import { FlatList, SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import EmptyState from '../components/EmptyState';
+import FloatingActionButton from '../components/FloatingActionButton';
+import { initDatabase } from '../database';
+import { useVideoStore } from '../store/videoStore';
 
-export default function HomeScreen() {
-  const { videos, isLoading, addVideo } = useVideos();
-  const [isCropModalVisible, setIsCropModalVisible] = useState(false);
+export default function VideoListScreen() {
+  const [isDbReady, setIsDbReady] = useState(false);
+  const { videos, fetchVideos, isLoading } = useVideoStore();
+  const router = useRouter();
 
-  const handleSaveVideo = (video: VideoMetadata) => {
-    addVideo(video);
+  // Initialize database on first load
+  useEffect(() => {
+    const setup = async () => {
+      try {
+        await initDatabase();
+        setIsDbReady(true);
+        await fetchVideos();
+      } catch (error) {
+        console.error('Setup error:', error);
+      }
+    };
+    setup();
+  }, []);
+
+  const handleAddVideo = () => {
+    router.push('/video/crop' as any);
   };
 
+  const handleVideoPress = (id: string) => {
+    router.push({
+      pathname: '/video/[id]',
+      params: { id }
+    } as any);
+  };
+
+  if (!isDbReady) {
+    return (
+      <View style={styles.loadingContainer}>
+        <Text>Setting up database...</Text>
+      </View>
+    );
+  }
+
   return (
-    <View className="flex-1 bg-gray-100">
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="auto" />
+
+      <View style={styles.header}>
+        <Text style={styles.title}>Video Diary</Text>
+      </View>
+
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#0000ff" />
-          <Text className="mt-2">Loading videos...</Text>
+        <View style={styles.loadingContainer}>
+          <Text>Loading videos...</Text>
         </View>
+      ) : videos.length === 0 ? (
+        <EmptyState message="No videos yet" />
       ) : (
-        <>
-          {(!videos || videos.length === 0) ? (
-            <View className="flex-1 items-center justify-center p-6">
-              <MaterialIcons name="videocam-off" size={64} color="#9CA3AF" />
-              <Text className="text-xl font-medium text-gray-600 mt-4">
-                No videos yet
-              </Text>
-              <Text className="text-gray-500 text-center mt-2">
-                Tap the + button to create your first video diary entry
-              </Text>
-            </View>
-          ) : (
-            <FlatList
-              data={videos}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => <VideoListItem video={item} />}
-              contentContainerClassName="p-4"
-            />
+        <FlatList
+          data={videos}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              style={styles.videoItem}
+              onPress={() => handleVideoPress(item.id)}
+            >
+              <View style={styles.videoPreview}>
+                {item.thumbnailUri ? (
+                  <Video
+                    source={{ uri: item.uri }}
+                    resizeMode={ResizeMode.COVER}
+                    style={styles.thumbnail}
+                    useNativeControls={false}
+                    isMuted={true}
+                    shouldPlay={false}
+                  />
+                ) : (
+                  <View style={[styles.thumbnail, styles.placeholderThumbnail]}>
+                    <Text style={styles.placeholderText}>Video</Text>
+                  </View>
+                )}
+              </View>
+              <View style={styles.videoInfo}>
+                <Text style={styles.videoName} numberOfLines={1}>{item.name}</Text>
+                <Text style={styles.videoDescription} numberOfLines={2}>
+                  {item.description || 'No description'}
+                </Text>
+              </View>
+            </TouchableOpacity>
           )}
-
-          <Pressable
-            className="absolute bottom-6 right-6 w-16 h-16 bg-blue-500 rounded-full items-center justify-center shadow-md"
-            onPress={() => setIsCropModalVisible(true)}
-          >
-            <MaterialIcons name="add" size={32} color="#fff" />
-          </Pressable>
-
-          <CropModal
-            isVisible={isCropModalVisible}
-            onClose={() => setIsCropModalVisible(false)}
-            onSave={handleSaveVideo}
-          />
-        </>
+          contentContainerStyle={styles.listContent}
+        />
       )}
-    </View>
+
+      <FloatingActionButton onPress={handleAddVideo} />
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  header: {
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  listContent: {
+    padding: 16,
+  },
+  videoItem: {
+    flexDirection: 'row',
+    borderRadius: 8,
+    backgroundColor: '#f9f9f9',
+    marginBottom: 16,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  videoPreview: {
+    width: 120,
+    height: 90,
+  },
+  thumbnail: {
+    width: '100%',
+    height: '100%',
+  },
+  placeholderThumbnail: {
+    backgroundColor: '#ddd',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  placeholderText: {
+    color: '#888',
+  },
+  videoInfo: {
+    flex: 1,
+    padding: 10,
+    justifyContent: 'center',
+  },
+  videoName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  videoDescription: {
+    fontSize: 14,
+    color: '#666',
+  },
+});
