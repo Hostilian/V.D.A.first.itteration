@@ -1,5 +1,5 @@
-import { FFmpegKit, FFmpegKitConfig, ReturnCode, Level } from 'ffmpeg-kit-react-native';
 import * as FileSystem from 'expo-file-system';
+import { FFmpegKit, FFmpegKitConfig, Level, ReturnCode } from 'ffmpeg-kit-react-native';
 import { Platform } from 'react-native';
 
 // Configuration constants
@@ -214,21 +214,29 @@ export const getVideoInfo = async (videoPath: string): Promise<any> => {
   }
 };
 
+interface FFmpegService {
+  initialize(): Promise<void>;
+  cleanup(): void;
+  getVideoInfo(path: string): Promise<any>;
+  cancelOperation(): void;
+}
 
+const ffmpegService: FFmpegService = {
+  initialize: async () => {
+    // Initialization logic
+  },
 
+  cleanup: () => {
+    // Cleanup logic
+  },
 
+  getVideoInfo: async (path: string) => {
+    // Video info logic
+  },
 
+  cancelOperation: () => {
+    // Cancel operation logic
+  }
+};
 
-
-
-
-
-
-
-
-
-
-
-
-
-};  cleanup  cancelOperation,  getVideoInfo,  compressVideo,  trimVideo,  cropVideo,  initFFmpeg,export default {};  videoInfoCache.clear();  await cleanupTempFiles();  await cancelOperation();export const cleanup = async (): Promise<void> => {// Cleanup when component unmounts or no longer needs the service
+export default ffmpegService;

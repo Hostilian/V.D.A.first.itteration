@@ -273,6 +273,15 @@ export const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
 
   return (
     <ErrorBoundary fallbackComponent={(error) => (
+      <View style={styles.errorContainer}>
+        <MaterialIcons name="error" size={48} color="#ff6b6b" />
+        <Text style={styles.errorTitle}>Something went wrong!</Text>
+        <Text style={styles.errorMessage}>{error.message}</Text>
+        {onCancel && (
+          <TouchableOpacity style={styles.errorButton} onPress={onCancel}>
+            <Text style={styles.errorButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        )}
       </View>
     )}>
       <KeyboardAvoidingView
@@ -337,7 +346,7 @@ export const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
             tags={values.tags}
             addTag={addTag}
             removeTag={removeTag}
-            error={errors.tags && touched.tags ? errors.tags : null}
+            error={errors.tags && touched.tags ? errors.tags : undefined}
           />
 
           {/* Date picker */}
@@ -414,4 +423,228 @@ export const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
                 styles.submitButton,
                 isProcessing ? styles.disabledButton : null
               ]}
-              onPress={handleFormSubmit
+              onPress={handleFormSubmit}
+              disabled={isProcessing}
+            >
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export default EnhancedMetadataForm;});  }    fontWeight: '600'    fontSize: 16,    color: 'white',  errorButtonText: {  },    borderRadius: 8    paddingHorizontal: 24,    paddingVertical: 12,    backgroundColor: '#3498db',  errorButton: {  },    marginBottom: 24    textAlign: 'center',    color: '#666',    fontSize: 16,  errorMessage: {  },    marginBottom: 8    marginTop: 16,    fontWeight: 'bold',    fontSize: 20,  errorTitle: {  },    backgroundColor: '#fff'    padding: 20,    alignItems: 'center',    justifyContent: 'center',    flex: 1,  errorContainer: {  },    zIndex: 10    backgroundColor: 'rgba(255, 255, 255, 0.9)',    alignItems: 'center',    justifyContent: 'center',    bottom: 0,    right: 0,    left: 0,    top: 0,    position: 'absolute',  successOverlay: {  },    fontWeight: '600'    fontSize: 16,    color: 'white',  buttonText: {  },    opacity: 0.7  disabledButton: {  },    flex: 2    backgroundColor: '#2ecc71',  submitButton: {  },    marginRight: 8    backgroundColor: '#95a5a6',  cancelButton: {  },    justifyContent: 'center'    alignItems: 'center',    borderRadius: 8,    paddingVertical: 14,    flex: 1,  button: {  },    marginTop: 16    justifyContent: 'space-between',    flexDirection: 'row',  buttonContainer: {  },    flex: 1    marginLeft: 8,    color: '#555',    fontSize: 14,  locationText: {  },    borderRadius: 8    backgroundColor: '#f2f2f2',    padding: 12,    marginTop: 12,    alignItems: 'center',    flexDirection: 'row',  locationDisplay: {  },    fontWeight: '600'    fontSize: 16,    marginLeft: 8,    color: 'white',  locationButtonText: {  },    paddingHorizontal: 16    paddingVertical: 12,    borderRadius: 8,    backgroundColor: '#3498db',    justifyContent: 'center',    alignItems: 'center',    flexDirection: 'row',  locationButton: {  },    marginBottom: 16  locationContainer: {  },    color: '#333'    fontSize: 16,  dateText: {  },    marginBottom: 16    backgroundColor: '#f9f9f9',    padding: 12,    borderRadius: 8,    borderColor: '#ddd',    borderWidth: 1,    alignItems: 'center',    justifyContent: 'space-between',    flexDirection: 'row',  datePickerButton: {  },    marginRight: 6    color: 'white',  tagText: {  },    marginBottom: 8    marginRight: 8,    borderRadius: 20,    paddingVertical: 6,    paddingHorizontal: 12,    backgroundColor: '#3498db',    alignItems: 'center',    flexDirection: 'row',  tag: {  },    marginTop: 8    flexWrap: 'wrap',    flexDirection: 'row',  tagsContainer: {  },    justifyContent: 'center'    alignItems: 'center',    borderRadius: 8,    height: 42,    width: 42,    backgroundColor: '#3498db',  addTagButton: {  },    marginRight: 8    marginBottom: 0,    flex: 1,  tagInput: {  },    marginBottom: 8    alignItems: 'center',    flexDirection: 'row',  tagInputRow: {  },    marginBottom: 16  tagInputContainer: {  },    marginBottom: 16    marginTop: -12,    textAlign: 'right',    color: '#999',    fontSize: 12,  charCount: {  },    textAlignVertical: 'top'    minHeight: 100,  textArea: {  },    marginBottom: 16    marginTop: -12,    fontSize: 14,    color: '#e74c3c',  errorText: {  },    borderColor: '#e74c3c'  inputError: {  },    backgroundColor: '#f9f9f9'    marginBottom: 16,    fontSize: 16,    padding: 12,    borderRadius: 8,    borderColor: '#ddd',    borderWidth: 1,  input: {  },    color: '#333'    marginBottom: 8,    fontWeight: '600',    fontSize: 16,  inputLabel: {  },    paddingBottom: 40    padding: 20,  scrollContent: {  },    flex: 1  scrollContainer: {  },    backgroundColor: '#fff'    flex: 1,  container: {const styles = StyleSheet.create({// Define styles};  );    </ErrorBoundary>      </KeyboardAvoidingView>        </ScrollView>          </View>            </TouchableOpacity>              )}                <Text style={styles.buttonText}>Save</Text>              ) : (                <ActivityIndicator color="#fff" size="small" />              {isProcessing ? (

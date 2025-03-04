@@ -6,7 +6,11 @@
     "paths": {
       "*": [
         "*"
-      ]
+      ],
+      "@components/*": ["./components/*"],
+      "@services/*": ["./services/*"],
+      "@hooks/*": ["./hooks/*"],
+      "@types/*": ["./types/*"]
     },
     "skipLibCheck": true,
     "typeRoots": [
