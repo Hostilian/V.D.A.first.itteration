@@ -1,6 +1,4 @@
-const createExpoWebpackConfigAsync = require('@expo/webpack-config');
 const path = require('path');
-const webpack = require('webpack');
 const fs = require('fs');
 
 // Create a simple empty file for the assets if they don't exist
@@ -21,6 +19,8 @@ module.exports = async function(env, argv) {
   createEmptyFileIfNeeded(path.resolve(__dirname, './assets/splash.png'));
   createEmptyFileIfNeeded(path.resolve(__dirname, './assets/adaptive-icon.png'));
 
+  return {
+    // Very simple webpack config that doesn't try to process the assets
   const config = await createExpoWebpackConfigAsync({
     ...env,
   }, argv);
