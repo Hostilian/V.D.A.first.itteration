@@ -2,16 +2,12 @@ import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
 import { WebSQLite } from '../lib/web/sqlite-mock';
 
-// SQLite transaction and result types
-type SQLTransaction = SQLite.SQLTransaction;
-type SQLResultSet = SQLite.SQLResultSet;
-type SQLError = SQLite.SQLError;
-
-// Use the web SQLite mock for web platform
+// Use the web SQLite mock for web platform or the native SQLite implementation
 const getDatabase = () => {
   if (Platform.OS === 'web') {
     return WebSQLite.openDatabase('videoDiary.db');
   } else {
+    // Using the correct function for SQLite
     return SQLite.openDatabase('videoDiary.db');
   }
 };
@@ -22,6 +18,10 @@ const db = getDatabase();
 // Initialize database tables
 export const initDatabase = (): Promise<void> => {
   return new Promise((resolve, reject) => {
+    db.transaction(
+      (tx) => {
+        // Create videos table
+        tx.executeSql(
     db.transaction(
       (tx: SQLTransaction) => {
         // Create videos table

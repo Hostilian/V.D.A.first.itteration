@@ -1,10 +1,10 @@
-import React, { useState, useEffect, forwardRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { Video, AVPlaybackStatus } from 'expo-av';
+import { AVPlaybackStatus, Video } from 'expo-av';
+import React, { forwardRef, useEffect, useState } from 'react';
+import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
+  useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
 
@@ -327,26 +327,24 @@ const styles = StyleSheet.create({
   controlsContainer: {
     marginTop: 10,
   },
+  label: {
+    fontSize: 14,
+    color: '#333',
+    marginBottom: 4,
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  segmentInfo: {
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  segmentDuration: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#4285F4',
+  },
+});
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export default VideoScrubber;});  },    color: '#4285F4',    fontWeight: 'bold',    fontSize: 16,  segmentDuration: {  },    marginTop: 8,    alignItems: 'center',  segmentInfo: {  },    height: 40,    width: '100%',  slider: {  },    marginBottom: 4,    color: '#333',    fontSize: 14,  label: {  },    marginTop: 10,  controlsContainer: {  },    marginLeft: -1.5,    borderRadius: 1.5,    backgroundColor: '#ff3b30',
+export default VideoScrubber;
