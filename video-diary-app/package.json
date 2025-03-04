@@ -11,7 +11,8 @@
     "prebuild:bypass": "node scripts/prebuild-bypass.js",
     "fix-sharp": "node scripts/fix-sharp-cli.js",
     "start:safe": "node scripts/start-web-temp.js",
-    "web:standalone": "npx webpack serve --mode development --entry ./web-entry.js --open"
+    "web:standalone": "npx webpack serve --mode development --config webpack.standalone.config.js --entry ./web-entry.js --open",
+    "check:android": "node scripts/check-android-sdk.js"
   },
   "dependencies": {
     "@expo/webpack-config": "^19.0.0",
