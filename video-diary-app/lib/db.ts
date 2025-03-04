@@ -203,4 +203,21 @@ export const getVideoById = (id: string): Promise<VideoMetadata | null> => {
 
 
 
-        tx.executeSql(      (tx: SQLite.SQLTransaction) => {    db.transaction(        if (!db) return resolve(false);    const db = openDB();  return new Promise((resolve) => {    }    return Promise.resolve(true);    webStorageVideos = webStorageVideos.filter(v => v.id !== id);    // For web, remove from in-memory array  if (Platform.OS === 'web') {export const deleteVideo = (id: string): Promise<boolean> => {// Delete video by ID};  });    );      }        return true;        resolve(video);      () => {      },        return false;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+};  });    );      }        return true;        resolve(true);      () => {      },        return false;        resolve(false);        console.error('Error deleting video:', error);      (_: Error, error: Error) => {      },        );          [id]          `DELETE FROM videos WHERE id = ?;`,        tx.executeSql(      (tx: SQLite.SQLTransaction) => {    db.transaction(        if (!db) return resolve(false);    const db = openDB();  return new Promise((resolve) => {    }    return Promise.resolve(true);    webStorageVideos = webStorageVideos.filter(v => v.id !== id);    // For web, remove from in-memory array  if (Platform.OS === 'web') {export const deleteVideo = (id: string): Promise<boolean> => {// Delete video by ID};  });    );      }        return true;        resolve(video);      () => {      },        return false;
