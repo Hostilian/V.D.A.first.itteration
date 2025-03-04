@@ -12,7 +12,8 @@
     "fix-sharp": "node scripts/fix-sharp-cli.js",
     "start:safe": "node scripts/start-web-temp.js",
     "web:standalone": "npx webpack serve --mode development --config webpack.standalone.config.js --open",
-    "check:android": "node scripts/check-android-sdk.js"
+    "check:android": "node scripts/check-android-sdk.js",
+    "check:ios": "node scripts/check-ios-sdk.js"
   },
   "dependencies": {
     "@expo/webpack-config": "^19.0.0",
