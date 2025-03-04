@@ -89,12 +89,12 @@ export const saveVideo = (video: VideoMetadata): Promise<boolean> => {
       (tx: SQLTransaction) => {
         tx.executeSql(
           `INSERT INTO videos (id, name, description, uri, duration, createdAt)
-        );
-      },
-      error => {
-        console.error('Transaction error during save:', error);
-        reject(error);
-      }
+           VALUES (?, ?, ?, ?, ?, ?);`,
+          [video.id, video.name, video.description, video.uri, video.duration, video.createdAt],
+          () => {
+            resolve(true);
+          },
+          (_: SQLTransaction, error: Error) => {
     );
   });
 };
