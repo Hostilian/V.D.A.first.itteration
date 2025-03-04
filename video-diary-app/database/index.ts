@@ -22,10 +22,6 @@ export const initDatabase = (): Promise<void> => {
       (tx) => {
         // Create videos table
         tx.executeSql(
-    db.transaction(
-      (tx: SQLTransaction) => {
-        // Create videos table
-        tx.executeSql(
           `CREATE TABLE IF NOT EXISTS videos (
             id TEXT PRIMARY KEY,
             name TEXT NOT NULL,
@@ -37,7 +33,11 @@ export const initDatabase = (): Promise<void> => {
           )`
         );
       },
-      (error: SQLError) => {
+      (error) => {
+        console.error('Error initializing database:', error);
+        reject(error);
+      },
+      () => {
         console.error('Error initializing database:', error);
         reject(error);
       },
