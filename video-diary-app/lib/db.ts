@@ -1,5 +1,5 @@
 import * as SQLite from 'expo-sqlite';
-import { SQLTransaction } from 'expo-sqlite';
+import { Platform } from 'react-native';
 import { VideoMetadata } from '../types';
 
 // Define types for database operations
@@ -19,17 +19,30 @@ export interface VideoRow {
   created_at: string;
 }
 
+// In-memory store for web platform
+let webStorageVideos: VideoMetadata[] = [];
+
 // Open database connection
-export const openDB = (): SQLite.SQLiteDatabase => {
+export const openDB = (): SQLite.SQLiteDatabase | null => {
+  if (Platform.OS === 'web') {
+    return null; // Return null for web platform
+  }
   return SQLite.openDatabaseSync('videodiary.db');
 };
 
 // Initialize the database
 export const initDatabase = async (): Promise<void> => {
+  if (Platform.OS === 'web') {
+    // For web, we'll use in-memory storage
+    console.log('Using in-memory storage for web platform');
+    return;
+  }
+
   const db = openDB();
+  if (!db) return;
 
   db.transaction(
-    (tx: SQLTransaction) => {
+    (tx: SQLite.SQLTransaction) => {
       // Create video table if it doesn't exist
       tx.executeSql(
         `CREATE TABLE IF NOT EXISTS videos (
@@ -51,11 +64,18 @@ export const initDatabase = async (): Promise<void> => {
 
 // Save video to database
 export const saveVideo = (video: VideoMetadata): Promise<boolean> => {
+  if (Platform.OS === 'web') {
+    // For web, save to in-memory array
+    webStorageVideos.push(video);
+    return Promise.resolve(true);
+  }
+
   return new Promise((resolve) => {
     const db = openDB();
+    if (!db) return resolve(false);
 
     db.transaction(
-      (tx: SQLTransaction) => {
+      (tx: SQLite.SQLTransaction) => {
         tx.executeSql(
           `INSERT INTO videos (id, name, description, uri, duration, created_at)
            VALUES (?, ?, ?, ?, ?, ?);`,
@@ -77,12 +97,19 @@ export const saveVideo = (video: VideoMetadata): Promise<boolean> => {
 
 // Get all videos from database
 export const getVideos = (): Promise<VideoMetadata[]> => {
+  if (Platform.OS === 'web') {
+    // For web, return from in-memory array
+    return Promise.resolve([...webStorageVideos]);
+  }
+
   return new Promise((resolve) => {
     const db = openDB();
+    if (!db) return resolve([]);
+
     const videos: VideoMetadata[] = [];
 
     db.transaction(
-      (tx: SQLTransaction) => {
+      (tx: SQLite.SQLTransaction) => {
         tx.executeSql(
           `SELECT * FROM videos ORDER BY created_at DESC;`,
           [],
@@ -116,36 +143,9 @@ export const getVideos = (): Promise<VideoMetadata[]> => {
 
 // Get video by ID
 export const getVideoById = (id: string): Promise<VideoMetadata | null> => {
-  return new Promise((resolve) => {
-    const db = openDB();
-    let video: VideoMetadata | null = null;
-
-    db.transaction(
-      (tx: SQLTransaction) => {
-        tx.executeSql(
-          `SELECT * FROM videos WHERE id = ?;`,
-          [id],
-          (_: any, { rows }: DBRows) => {
-            if (rows.length > 0) {
-              const row = rows._array[0] as VideoRow;
-              video = {
-                id: row.id,
-                name: row.name,
-                description: row.description,
-                uri: row.uri,
-                duration: row.duration,
-                createdAt: row.created_at,
-              };
-            }
-          }
-        );
-      },
-      (_: Error, error: Error) => {
-        console.error('Error fetching video:', error);
-        resolve(null);
-        return false;
-      },
-      () => {
+  if (Platform.OS === 'web') {
+    // For web, find in in-memory array
+    const video = webStorageVideos.find(v => v.id === id) || null;
         resolve(video);
         return true;
       }
