@@ -6,7 +6,6 @@ const path = require('path');
 const fs = require('fs');
 const getConfig = require('./webpack.config');
 const net = require('net');
-const mime = require('mime');
 
 // Function to find an available port
 const findAvailablePort = (startPort, callback) => {
@@ -89,6 +88,9 @@ async function startWeb() {
         console.error('Error finding available port:', err);
         process.exit(1);
       }
+
+      // Dynamically import mime package
+      const mime = await import('mime');
 
       // Create server with dynamic port
       const server = new WebpackDevServer({
