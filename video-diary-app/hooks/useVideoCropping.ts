@@ -21,7 +21,7 @@ export default function useVideoCropping(onSuccess: () => void) {
   const [videoDescription, setVideoDescription] = useState('');
 
   // References
-  const videoRef = useRef<Video>(null);
+  const videoRef = useRef<React.ComponentRef<typeof Video>>(null);
 
   // Store
   const { addVideo } = useVideoStore();

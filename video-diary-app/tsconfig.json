@@ -4,7 +4,9 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "*": ["*"]
+      "*": [
+        "*"
+      ]
     },
     "skipLibCheck": true,
     "typeRoots": [
@@ -24,8 +26,6 @@
   "include": [
     "**/*.ts",
     "**/*.tsx",
-    ".expo/types/**/*.ts",
-    "expo-env.d.ts",
     "types/**/*.ts",
     "types/**/*.d.ts",
     "typings/*.d.ts"

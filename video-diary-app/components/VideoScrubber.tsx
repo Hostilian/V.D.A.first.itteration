@@ -1,7 +1,7 @@
 import Slider from '@react-native-community/slider';
-import { AVPlaybackStatus, Video } from 'expo-av';
+import { Video } from 'expo-av';
 import React, { forwardRef, useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, ViewStyle } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -20,7 +20,7 @@ interface VideoScrubberProps {
   onDurationChange?: (duration: number) => void;
 }
 
-const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
+const VideoScrubber = forwardRef<React.ComponentRef<typeof Video>, VideoScrubberProps>(
   ({
     videoUri,
     startTime,

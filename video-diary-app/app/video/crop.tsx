@@ -24,7 +24,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function VideoCropScreen() {
   const router = useRouter();
-  const videoRef = useRef<Video>(null);
+  const videoRef = useRef<React.ComponentRef<typeof Video>>(null);
 
   // State for video selection and cropping
   const [videoUri, setVideoUri] = useState<string | null>(null);
