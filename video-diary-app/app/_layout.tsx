@@ -10,12 +10,10 @@ const queryClient = new QueryClient();
 
 export default function AppLayout() {
   useEffect(() => {
-    // Initialize database on app start, but only on native platforms
-    if (Platform.OS !== 'web') {
-      initDatabase().catch(error =>
-        console.error('Failed to initialize database:', error)
-      );
-    }
+    // Initialize database on app start
+    initDatabase().catch(error =>
+      console.error('Failed to initialize database:', error)
+    );
   }, []);
 
   return (

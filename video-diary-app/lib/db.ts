@@ -1,12 +1,28 @@
-import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
 import { VideoMetadata } from '../types';
+
+// Import the appropriate SQLite implementation
+let SQLite: any;
+if (Platform.OS !== 'web') {
+  SQLite = require('expo-sqlite');
+} else {
+  // Use our web mock for web platform
+  const { WebSQLite } = require('./web/sqlite-mock');
+  SQLite = WebSQLite;
+}
+
+// Define database name
+const DATABASE_NAME = 'videodiary.db';
+
+// Database instance
+export const db = SQLite.openDatabase(DATABASE_NAME);
 
 // Define types for database operations
 interface DBRows {
   rows: {
     _array: any[];
     length: number;
+    item: (index: number) => any;
   };
 }
 
@@ -16,80 +32,68 @@ export interface VideoRow {
   description: string;
   uri: string;
   duration: number;
-  created_at: string;
+  createdAt: string;
 }
-
-// In-memory store for web platform
-let webStorageVideos: VideoMetadata[] = [];
-
-// Open database connection
-export const openDB = (): SQLite.SQLiteDatabase | null => {
-  if (Platform.OS === 'web') {
-    return null; // Return null for web platform
-  }
-  return SQLite.openDatabaseSync('videodiary.db');
-};
 
 // Initialize the database
 export const initDatabase = async (): Promise<void> => {
-  if (Platform.OS === 'web') {
-    // For web, we'll use in-memory storage
-    console.log('Using in-memory storage for web platform');
-    return;
-  }
+  return new Promise<void>((resolve, reject) => {
+    console.log(`Initializing database on platform: ${Platform.OS}`);
 
-  const db = openDB();
-  if (!db) return;
-
-  db.transaction(
-    (tx: SQLite.SQLTransaction) => {
-      // Create video table if it doesn't exist
-      tx.executeSql(
-        `CREATE TABLE IF NOT EXISTS videos (
-          id TEXT PRIMARY KEY,
-          name TEXT NOT NULL,
-          description TEXT,
-          uri TEXT NOT NULL,
-          duration REAL NOT NULL,
-          created_at TEXT NOT NULL
-        );`
-      );
-    },
-    (_: Error, error: Error) => {
-      console.error('Error creating database tables:', error);
-      return false;
-    }
-  );
+    db.transaction(
+      tx => {
+        // Create videos table if it doesn't exist
+        tx.executeSql(
+          `CREATE TABLE IF NOT EXISTS videos (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            description TEXT,
+            uri TEXT NOT NULL,
+            duration REAL NOT NULL,
+            createdAt TEXT NOT NULL
+          );`,
+          [],
+          () => {
+            console.log('Database initialized successfully');
+            resolve();
+          },
+          (_, error) => {
+            console.error('Error initializing database:', error);
+            reject(error);
+            return false;
+          }
+        );
+      },
+      error => {
+        console.error('Transaction error during database initialization:', error);
+        reject(error);
+      }
+    );
+  });
 };
 
 // Save video to database
 export const saveVideo = (video: VideoMetadata): Promise<boolean> => {
-  if (Platform.OS === 'web') {
-    // For web, save to in-memory array
-    webStorageVideos.push(video);
-    return Promise.resolve(true);
-  }
-
-  return new Promise((resolve) => {
-    const db = openDB();
-    if (!db) return resolve(false);
-
+  return new Promise((resolve, reject) => {
     db.transaction(
-      (tx: SQLite.SQLTransaction) => {
+      tx => {
         tx.executeSql(
-          `INSERT INTO videos (id, name, description, uri, duration, created_at)
+          `INSERT INTO videos (id, name, description, uri, duration, createdAt)
            VALUES (?, ?, ?, ?, ?, ?);`,
-          [video.id, video.name, video.description, video.uri, video.duration, video.createdAt]
+          [video.id, video.name, video.description, video.uri, video.duration, video.createdAt],
+          () => {
+            resolve(true);
+          },
+          (_, error) => {
+            console.error('Error saving video:', error);
+            reject(error);
+            return false;
+          }
         );
       },
-      (_: Error, error: Error) => {
-        console.error('Error saving video:', error);
-        resolve(false);
-        return false;
-      },
-      () => {
-        resolve(true);
-        return true;
+      error => {
+        console.error('Transaction error during save:', error);
+        reject(error);
       }
     );
   });
@@ -97,45 +101,38 @@ export const saveVideo = (video: VideoMetadata): Promise<boolean> => {
 
 // Get all videos from database
 export const getVideos = (): Promise<VideoMetadata[]> => {
-  if (Platform.OS === 'web') {
-    // For web, return from in-memory array
-    return Promise.resolve([...webStorageVideos]);
-  }
-
-  return new Promise((resolve) => {
-    const db = openDB();
-    if (!db) return resolve([]);
-
+  return new Promise((resolve, reject) => {
     const videos: VideoMetadata[] = [];
 
     db.transaction(
-      (tx: SQLite.SQLTransaction) => {
+      tx => {
         tx.executeSql(
-          `SELECT * FROM videos ORDER BY created_at DESC;`,
+          `SELECT * FROM videos ORDER BY createdAt DESC;`,
           [],
-          (_: any, { rows }: DBRows) => {
+          (_, { rows }) => {
             for (let i = 0; i < rows.length; i++) {
-              const row = rows._array[i] as VideoRow;
+              const row = rows.item(i);
               videos.push({
                 id: row.id,
                 name: row.name,
-                description: row.description,
+                description: row.description || '',
                 uri: row.uri,
                 duration: row.duration,
-                createdAt: row.created_at,
+                createdAt: row.createdAt,
               });
             }
+            resolve(videos);
+          },
+          (_, error) => {
+            console.error('Error fetching videos:', error);
+            reject(error);
+            return false;
           }
         );
       },
-      (_: Error, error: Error) => {
-        console.error('Error fetching videos:', error);
-        resolve([]);
-        return false;
-      },
-      () => {
-        resolve(videos);
-        return true;
+      error => {
+        console.error('Transaction error during fetch:', error);
+        reject(error);
       }
     );
   });
@@ -143,46 +140,82 @@ export const getVideos = (): Promise<VideoMetadata[]> => {
 
 // Get video by ID
 export const getVideoById = (id: string): Promise<VideoMetadata | null> => {
-  if (Platform.OS === 'web') {
-    // For web, find in in-memory array
-    const video = webStorageVideos.find(v => v.id === id) || null;
-    return Promise.resolve(video);
-  }
-
-  return new Promise((resolve) => {
-    const db = openDB();
-    if (!db) return resolve(null);
-
-    let video: VideoMetadata | null = null;
-
+  return new Promise((resolve, reject) => {
     db.transaction(
-      (tx: SQLite.SQLTransaction) => {
+      tx => {
         tx.executeSql(
           `SELECT * FROM videos WHERE id = ?;`,
           [id],
-          (_: any, { rows }: DBRows) => {
+          (_, { rows }) => {
             if (rows.length > 0) {
-              const row = rows._array[0] as VideoRow;
-              video = {
+              const row = rows.item(0);
+              resolve({
                 id: row.id,
                 name: row.name,
-                description: row.description,
+                description: row.description || '',
                 uri: row.uri,
                 duration: row.duration,
-                createdAt: row.created_at,
-              };
+                createdAt: row.createdAt,
+              });
+            } else {
+              resolve(null);
             }
+          },
+          (_, error) => {
+            console.error('Error fetching video by ID:', error);
+            reject(error);
+            return false;
           }
         );
       },
-      (_: Error, error: Error) => {
-        console.error('Error fetching video:', error);
-        resolve(null);
-        return false;
+      error => {
+        console.error('Transaction error during fetch by ID:', error);
+        reject(error);
+      }
+    );
+  });
+};
+
+// Update video metadata
+export const updateVideo = (id: string, updates: { name?: string; description?: string }): Promise<boolean> => {
+  const fields: string[] = [];
+  const values: any[] = [];
+
+  if (updates.name !== undefined) {
+    fields.push('name = ?');
+    values.push(updates.name);
+  }
+
+  if (updates.description !== undefined) {
+    fields.push('description = ?');
+    values.push(updates.description);
+  }
+
+  if (fields.length === 0) {
+    return Promise.resolve(true);
+  }
+
+  values.push(id);
+
+  return new Promise((resolve, reject) => {
+    db.transaction(
+      tx => {
+        tx.executeSql(
+          `UPDATE videos SET ${fields.join(', ')} WHERE id = ?;`,
+          values,
+          () => {
+            resolve(true);
+          },
+          (_, error) => {
+            console.error('Error updating video:', error);
+            reject(error);
+            return false;
+          }
+        );
       },
-      () => {
-        resolve(video);
-        return true;
+      error => {
+        console.error('Transaction error during update:', error);
+        reject(error);
       }
     );
   });
@@ -190,31 +223,25 @@ export const getVideoById = (id: string): Promise<VideoMetadata | null> => {
 
 // Delete video by ID
 export const deleteVideo = (id: string): Promise<boolean> => {
-  if (Platform.OS === 'web') {
-    // For web, remove from in-memory array
-    webStorageVideos = webStorageVideos.filter(v => v.id !== id);
-    return Promise.resolve(true);
-  }
-
-  return new Promise((resolve) => {
-    const db = openDB();
-    if (!db) return resolve(false);
-
+  return new Promise((resolve, reject) => {
     db.transaction(
-      (tx: SQLite.SQLTransaction) => {
+      tx => {
         tx.executeSql(
-          `DELETE FROM videos WHERE id = ?;`,
-          [id]
+          'DELETE FROM videos WHERE id = ?;',
+          [id],
+          () => {
+            resolve(true);
+          },
+          (_, error) => {
+            console.error('Error deleting video:', error);
+            reject(error);
+            return false;
+          }
         );
       },
-      (_: Error, error: Error) => {
-        console.error('Error deleting video:', error);
-        resolve(false);
-        return false;
-      },
-      () => {
-        resolve(true);
-        return true;
+      error => {
+        console.error('Transaction error during delete:', error);
+        reject(error);
       }
     );
   });
