@@ -1,68 +1,183 @@
 import * as FileSystem from 'expo-file-system';
 import { Platform } from 'react-native';
 
-/**
- * This is a mock FFMPEG service since setting up real FFMPEG
- * requires additional native code integration
- *
- * In a real app, you would use ffmpeg-kit-react-native here
- */
+// In a real implementation, we would import ffmpeg-kit-react-native like this:
+// import { FFmpegKit, FFmpegKitConfig, ReturnCode } from 'ffmpeg-kit-react-native';
 
 /**
- * Crops a video segment between start and end times
+ * Interface for FFMPEG processing result
+ */
+interface FFmpegResult {
+  success: boolean;
+  outputPath: string;
+  error?: string;
+  duration?: number;
+}
+
+/**
+ * Crop a video to a specific time range using FFMPEG
  */
 export const cropVideo = async (
   inputPath: string,
   startTime: number,
   endTime: number
-): Promise<string> => {
-  console.log(`[FFMPEG] Cropping video from ${startTime}s to ${endTime}s`);
+): Promise<FFmpegResult> => {
+  try {
+    console.log(`[FFMPEG] Cropping video from ${startTime}s to ${endTime}s`);
 
-  // In a real app, we would execute FFMPEG command like:
-  // ffmpeg -i inputPath -ss startTime -t (endTime-startTime) -c copy outputPath
+    // Create directory for processed videos if it doesn't exist
+    const processingDir = `${FileSystem.documentDirectory}processed_videos/`;
+    const dirInfo = await FileSystem.getInfoAsync(processingDir);
 
-  // For now, simulate processing delay and return a mock result
-  await new Promise(resolve => setTimeout(resolve, 2000));
-
-  // On real device, we'd generate a new file in app's documents directory
-  // For this mock, we'll just return the original file path
-  if (Platform.OS === 'web') {
-    return inputPath;
-  } else {
-    // On native platforms, let's at least copy the file to simulate saving a new version
-    try {
-      const filename = inputPath.split('/').pop() || 'cropped_video.mp4';
-      const outputPath = `${FileSystem.documentDirectory}cropped_${Date.now()}_${filename}`;
-
-      await FileSystem.copyAsync({
-        from: inputPath,
-        to: outputPath
-      });
-
-      return outputPath;
-    } catch (error) {
-      console.error('Error copying video file:', error);
-      // Fallback to input path if copying fails
-      return inputPath;
+    if (!dirInfo.exists) {
+      await FileSystem.makeDirectoryAsync(processingDir, { intermediates: true });
     }
-  }
-};
 
-/**
- * Extracts a frame from video at specified time for thumbnail
- */
-export const extractThumbnail = async (
-  inputPath: string,
-  timePosition: number = 0
-): Promise<string | null> => {
-  console.log(`[FFMPEG] Extracting thumbnail at ${timePosition}s`);
+    // Generate unique output filename
+    const timestamp = new Date().getTime();
+    const outputFilename = `cropped_${timestamp}.mp4`;
+    const outputPath = `${processingDir}${outputFilename}`;
 
-  // In a real app, we would execute FFMPEG command like:
-  // ffmpeg -i inputPath -ss timePosition -vframes 1 outputPath
+    // Calculate segment duration
+    const duration = endTime - startTime;
 
-  // For now, just simulate processing and return null (indicating no thumbnail)
-  await new Promise(resolve => setTimeout(resolve, 1000));
+    if (Platform.OS === 'web') {
+      // Mock implementation for web (FFMPEG is not supported on web)
+      console.log('[FFMPEG] Web platform detected, simulating crop operation');
+      await simulateCropOperation(duration);
+      return {
+        success: true,
+        outputPath: inputPath, // On web, we return original video
+        duration
+      };
+    }
 
-  // In a real implementation, we would return path to the extracted image
-  return null;
-};
+    // In a real implementation, we would use ffmpeg-kit-react-native like this:
+    /*
+    // Format times as hh:mm:ss.xxx
+    const formatTime = (seconds: number) => {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      const secs = seconds % 60;
+      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toFixed(3).padStart(6, '0')}`;
+    };
+
+    // Build the FFmpeg command
+    const command = `-ss ${formatTime(startTime)} -i "${inputPath}" -t ${formatTime(duration)} -c:v libx264 -c:a aac -strict experimental -b:a 128k "${outputPath}"`;
+
+    // Execute the command
+    const session = await FFmpegKit.execute(command);
+    const returnCode = await session.getReturnCode();
+
+    if (ReturnCode.isSuccess(returnCode)) {
+      return {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+};  await new Promise(resolve => setTimeout(resolve, processingTime));  const processingTime = Math.min(2000, 500 + duration * 100);  // Simulate processing time proportional to video durationconst simulateCropOperation = async (duration: number): Promise<void> => { */ * Helper function to simulate processing delay/**};  }    return null;    console.error('[FFMPEG] Error extracting thumbnail:', error);  } catch (error) {        return null;    // we'll return null in this mock implementation    // Since we can't actually generate a thumbnail without FFMPEG,        await new Promise(resolve => setTimeout(resolve, 800));    // For this mock implementation, we'll just simulate processing        */    }      throw new Error(`Thumbnail extraction failed: ${logs}`);      const logs = await session.getLogs();    } else {      return outputPath;    if (ReturnCode.isSuccess(returnCode)) {        const returnCode = await session.getReturnCode();    const session = await FFmpegKit.execute(command);        const command = `-ss ${formatTime(timePosition)} -i "${videoPath}" -vframes 1 -q:v 2 "${outputPath}"`;    };      return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toFixed(3).padStart(6, '0')}`;      const secs = seconds % 60;      const minutes = Math.floor((seconds % 3600) / 60);      const hours = Math.floor(seconds / 3600);    const formatTime = (seconds: number) => {    // Format time as hh:mm:ss.xxx    /*    // In a real implementation with ffmpeg-kit-react-native:        }      return null;      await new Promise(resolve => setTimeout(resolve, 500));      // Mock implementation for web    if (Platform.OS === 'web') {        const outputPath = `${thumbnailDir}${outputFilename}`;    const outputFilename = `thumbnail_${timestamp}.jpg`;    const timestamp = new Date().getTime();    // Generate unique output filename        }      await FileSystem.makeDirectoryAsync(thumbnailDir, { intermediates: true });    if (!dirInfo.exists) {        const dirInfo = await FileSystem.getInfoAsync(thumbnailDir);    const thumbnailDir = `${FileSystem.documentDirectory}thumbnails/`;    // Create directory for thumbnails if it doesn't exist        console.log(`[FFMPEG] Extracting thumbnail at ${timePosition}s`);  try {): Promise<string | null> => {  timePosition: number = 0  videoPath: string,export const extractThumbnail = async ( */ * Generate a thumbnail from a video at a specific time/**};  }    };      error: error instanceof Error ? error.message : 'Unknown error occurred'      outputPath: '',      success: false,    return {    console.error('[FFMPEG] Error cropping video:', error);  } catch (error) {        };      duration      outputPath,      success: true,    return {        });      to: outputPath      from: inputPath,    await FileSystem.copyAsync({    // Copy the input file to simulate processing        await simulateCropOperation(duration);    // For this mock implementation, we'll copy the original file        */    }      throw new Error(`FFMPEG processing failed: ${logs}`);      const logs = await session.getLogs();    } else {      };        duration        outputPath,        success: true,

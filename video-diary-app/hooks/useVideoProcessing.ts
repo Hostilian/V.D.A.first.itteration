@@ -1,59 +1,83 @@
 // hooks/useVideoProcessing.ts
-import * as FileSystem from 'expo-file-system';
+import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Platform } from 'react-native';
+import { Alert } from 'react-native';
+import { cropVideo, extractThumbnail } from '../services/ffmpeg';
 
-export const useVideoProcessing = () => {
-  const [isProcessing, setIsProcessing] = useState(false);
+interface UseVideoProcessingProps {
+  onSuccess?: (result: { videoUri: string; thumbnailUri: string | null; duration: number }) => void;
+  onError?: (error: Error) => void;
+}
+
+export default function useVideoProcessing({ onSuccess, onError }: UseVideoProcessingProps = {}) {
   const [progress, setProgress] = useState(0);
 
-  const cropVideo = async (videoUri: string, startTime: number, duration: number): Promise<string | null> => {
-    try {
-      setIsProcessing(true);
-      setProgress(0);
+  // Mutation for video cropping
+  const cropMutation = useMutation({
+    mutationFn: async ({
+      videoUri,
+      startTime,
+      endTime,
+    }: {
+      videoUri: string;
+      startTime: number;
+      endTime: number;
+    }) => {
+      try {
+        // Start processing
+        setProgress(0.1);
 
-      // For web, we don't actually process the video due to browser limitations
-      if (Platform.OS === 'web') {
-        // Simulate processing time
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        setProgress(1);
-        setIsProcessing(false);
-        return videoUri; // Return the original URI for web
+        // Crop the video
+        const cropResult = await cropVideo(videoUri, startTime, endTime);
+        setProgress(0.7);
+
+        if (!cropResult.success || !cropResult.outputPath) {
+          throw new Error(cropResult.error || 'Failed to crop video');
+        }
+
+        // Generate thumbnail from the middle of the segment
+        const thumbnailPosition = startTime + (endTime - startTime) / 2;
+        const thumbnailUri = await extractThumbnail(cropResult.outputPath, thumbnailPosition);
+        setProgress(1.0);
+
+        return {
+          videoUri: cropResult.outputPath,
+          thumbnailUri,
+          duration: cropResult.duration || (endTime - startTime),
+        };
+      } catch (error) {
+        console.error('Video processing error:', error);
+        throw error;
       }
-
-      // For native platforms, we would use FFmpeg or a similar tool
-      // This is a placeholder for actual video processing code
-
-      // Simulate processing with progress updates
-      for (let i = 0; i < 5; i++) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        setProgress((i + 1) / 5);
+    },
+    onSuccess: (result) => {
+      if (onSuccess) {
+        onSuccess(result);
       }
+    },
+    onError: (error: Error) => {
+      console.error('Video processing failed:', error);
+      Alert.alert(
 
-      // In a real implementation, we'd create a new file with the cropped video
-      // For now, just create a copy to simulate processing
-      const fileExtension = videoUri.split('.').pop();
-      const newFileName = `cropped-${Date.now()}.${fileExtension}`;
-      const newFileUri = `${FileSystem.cacheDirectory}${newFileName}`;
 
-      // Copy the file (in a real app, this would be the cropped version)
-      await FileSystem.copyAsync({
-        from: videoUri,
-        to: newFileUri
-      });
 
-      setIsProcessing(false);
-      return newFileUri;
-    } catch (error) {
-      console.error('Error processing video:', error);
-      setIsProcessing(false);
-      return null;
-    }
-  };
 
-  return {
-    cropVideo,
-    isProcessing,
-    progress
-  };
-};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}  };    reset: cropMutation.reset,    progress,    error: cropMutation.error,    isError: cropMutation.isError,    isSuccess: cropMutation.isSuccess,    isProcessing: cropMutation.isPending,    cropVideoAsync: cropMutation.mutateAsync,    cropVideo: cropMutation.mutate,  return {  });    },      }        onError(error);      if (onError) {      );        [{ text: 'OK' }]        'There was an error processing your video. Please try again.',        'Processing Failed',
