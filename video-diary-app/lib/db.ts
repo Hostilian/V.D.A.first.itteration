@@ -218,12 +218,12 @@ export const updateVideo = (id: string, updates: { name?: string; description?: 
           },
           (_: SQLTransaction, error: Error) => {
             console.error('Error updating video:', error);
-  });
-};
-
-// Delete video by ID
-export const deleteVideo = (id: string): Promise<boolean> => {
-  return new Promise((resolve, reject) => {
+            reject(error);
+            return false;
+          }
+        );
+      },
+      (error: Error) => {
     db.transaction(
       tx => {
         tx.executeSql(
