@@ -28,9 +28,16 @@ import { useFormValidation, videoMetadataSchema } from '../../lib/validation';
 import { ErrorBoundary } from '../ErrorHandling/ErrorBoundary';
 
 // Define TagInput component
-const TagInput = ({ tags, addTag, removeTag, error }) => {
+interface TagInputProps {
+  tags?: string[];
+  addTag: (tag: string) => void;
+  removeTag: (index: number) => void;
+  error?: string;
+}
+
+const TagInput: React.FC<TagInputProps> = ({ tags = [], addTag, removeTag, error }) => {
   const [input, setInput] = useState('');
-  const inputRef = useRef(null);
+  const inputRef = useRef<TextInput>(null);
 
   const handleSubmit = useCallback(() => {
     if (input.trim()) {
@@ -61,7 +68,7 @@ const TagInput = ({ tags, addTag, removeTag, error }) => {
       {error && <Text style={styles.errorText}>{error}</Text>}
 
       <View style={styles.tagsContainer}>
-        {tags && tags.map((tag, index) => (
+        {tags.map((tag, index) => (
           <View key={index} style={styles.tag}>
             <Text style={styles.tagText}>{tag}</Text>
             <TouchableOpacity onPress={() => {
@@ -149,7 +156,7 @@ export const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
       withTiming(-10, { duration: 50, easing: Easing.linear }),
       withTiming(10, { duration: 50, easing: Easing.linear }),
       withTiming(-10, { duration: 50, easing: Easing.linear }),
-      withTiming(0, { duration: 50, easing: Easing.linear }),
+      withTiming(0, { duration: 50, easing: Easing.linear })
     );
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   }, [shake]);
@@ -253,7 +260,7 @@ export const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
   }, [values, onSubmit, validateAll, errors, triggerShake]);
 
   // Handle date change
-  const handleDateChange = useCallback((event, selectedDate?: Date) => {
+  const handleDateChange = useCallback((event: any, selectedDate?: Date) => {
     setDatePickerVisible(false);
     if (selectedDate) {
       setValues({
@@ -266,13 +273,6 @@ export const EnhancedMetadataForm: React.FC<EnhancedMetadataFormProps> = ({
 
   return (
     <ErrorBoundary fallbackComponent={(error) => (
-      <View style={styles.errorContainer}>
-        <MaterialIcons name="error" size={48} color="#ff6b6b" />
-        <Text style={styles.errorTitle}>Something went wrong!</Text>
-        <Text style={styles.errorMessage}>{error.message}</Text>
-        <TouchableOpacity style={styles.errorButton} onPress={onCancel}>
-          <Text style={styles.errorButtonText}>Go Back</Text>
-        </TouchableOpacity>
       </View>
     )}>
       <KeyboardAvoidingView

@@ -17,195 +17,188 @@ export const ValidationErrorMessages = {
   tooLong: (field: string, max: number) => `${field} cannot exceed ${max} characters`,
   invalidFormat: (field: string) => `${field} format is invalid`,
   fileSize: (maxSize: string) => `File size should not exceed ${maxSize}`,
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-export type VideoMetadataFormValues = z.infer<typeof videoMetadataSchema>;};  }    return constraints.allowedFormats.includes(format);    const format = mimeType.split('/')[1];    const constraints = platformSpecificValidation.getVideoConstraints();  isVideoFormatSupported: (mimeType: string) => {    },    }      };        allowedFormats: ['mp4']        maxFileSize: 300 * 1024 * 1024, // 300MB        maxDuration: 300, // 5 minutes      return {    } else {      };        allowedFormats: ['mp4', '3gp', 'webm']        maxFileSize: 700 * 1024 * 1024, // 700MB        maxDuration: 600,      return {    } else if (Platform.OS === 'android') {      };        allowedFormats: ['mp4', 'mov']        maxFileSize: 1024 * 1024 * 1024, // 1GB        maxDuration: 600, // 10 minutes      return {    if (Platform.OS === 'ios') {  getVideoConstraints: () => {export const platformSpecificValidation = {// Platform-specific validation helpers}  };    validateField    validateAll,    handleBlur,    handleChange,    touched,    errors,    setValues,    values,  return {    }, [schema, values]);    return true;    }      return false;      setTouched(prev => ({ ...prev, ...allTouched }));      }, {} as Record<string, boolean>);        return acc;        acc[key] = true;      const allTouched = Object.keys(result.errors).reduce((acc, key) => {      // Mark all fields as touched      setErrors(result.errors);    if (!result.success && result.errors) {    const result = validateForm(schema, values);  const validateAll = useCallback(() => {    }, [values, validateField]);    validateField(name, values[name]);    setTouched(prev => ({ ...prev, [name]: true }));  const handleBlur = useCallback((name: keyof T) => {    }, [touched, validateField]);    }      validateField(name, value);    if (touched[name as string]) {    setValues(prev => ({ ...prev, [name]: value }));  const handleChange = useCallback((name: keyof T, value: any) => {    }, [schema]);    }      return true;      setErrors(prev => ({ ...prev, [name]: '' }));    } else {      return false;      setErrors(prev => ({ ...prev, [name]: result.errors![name] || '' }));    if (!result.success && result.errors) {        const result = validateForm(fieldSchema, { [name]: value });    const fieldSchema = z.object({ [name]: schema.shape[name] });  const validateField = useCallback((name: keyof T, value: any) => {    const [touched, setTouched] = useState<Record<string, boolean>>({});  const [errors, setErrors] = useState<Record<string, string>>({});  const [values, setValues] = useState<Partial<T>>(initialValues);export function useFormValidation<T>(schema: z.ZodType<T>, initialValues: Partial<T>) {// Create a form hook wrapper for validation}  }    };      errors: { form: 'An unknown validation error occurred' }       success: false,     return {         }      return { success: false, errors: formattedErrors };            });        formattedErrors[key] = err.message;        const key = err.path.join('.') || 'form';      error.errors.forEach((err) => {            const formattedErrors: Record<string, string> = {};    if (error instanceof z.ZodError) {  } catch (error) {    return { success: true, data: validData };    const validData = schema.parse(data);  try {} {  errors?: Record<string, string>   data?: T;  success: boolean;export function validateForm<T>(schema: z.ZodType<T>, data: unknown): { // Form validation helper that returns formatted errors});  maxCacheSize: z.number().min(100 * 1024 * 1024) // Minimum 100MB  notificationsEnabled: z.boolean(),  darkMode: z.boolean(),  autoSaveEnabled: z.boolean(),  videoQuality: z.enum(['high', 'medium', 'low']),export const userSettingsSchema = z.object({// User settings validation});  height: z.number().min(50, { message: 'Height must be at least 50px' })  width: z.number().min(50, { message: 'Width must be at least 50px' }),  y: z.number().min(0),  x: z.number().min(0),export const cropParametersSchema = z.object({// Video crop parameters validation  .max(100, { message: ValidationErrorMessages.tooLong('Search query', 100) });  .min(1, { message: 'Search query cannot be empty' })  .trim()export const searchQuerySchema = z.string()// User input validation for search});  }).optional()    address: z.string().optional()    longitude: z.number().optional(),    latitude: z.number().optional(),  location: z.object({  recordedAt: z.date().optional(),    .optional(),    .max(MAX_TAGS, { message: `Cannot add more than ${MAX_TAGS} tags` })    .max(MAX_TAG_LENGTH, { message: ValidationErrorMessages.tooLong('Tag', MAX_TAG_LENGTH) }))  tags: z.array(z.string()    .optional(),    .max(MAX_DESCRIPTION_LENGTH, { message: ValidationErrorMessages.tooLong('Description', MAX_DESCRIPTION_LENGTH) })  description: z.string()    .max(MAX_TITLE_LENGTH, { message: ValidationErrorMessages.tooLong('Title', MAX_TITLE_LENGTH) }),    .min(MIN_TITLE_LENGTH, { message: ValidationErrorMessages.tooShort('Title', MIN_TITLE_LENGTH) })  title: z.string()export const videoMetadataSchema = z.object({// Video metadata validation});  path: ['fileSize']  message: ValidationErrorMessages.fileSize('500MB'),}, {  return true;  }    return data.fileSize <= MAX_SIZE;  if (data.fileSize) {  const MAX_SIZE = 500 * 1024 * 1024;  // Max file size: 500MB (adjust as needed)}).refine(data => {  path: ['mimeType']  message: ValidationErrorMessages.invalidFileType,}, {  return true;  }    return data.mimeType.startsWith('video/');  if (data.mimeType) {}).refine(data => {  duration: z.number().optional()  mimeType: z.string().optional(),  fileSize: z.number().optional(),  uri: z.string().min(1, { message: ValidationErrorMessages.required }),export const videoFileSchema = z.object({// Video file validation};  invalidFileType: 'File type not supported'
+  invalidFileType: 'File type not supported'
+};
+
+// Video file validation
+export const videoFileSchema = z.object({
+  uri: z.string().min(1, { message: ValidationErrorMessages.required }),
+  fileSize: z.number().optional(),
+  mimeType: z.string().optional(),
+  duration: z.number().optional()
+}).refine(data => {
+  if (data.mimeType) {
+    return data.mimeType.startsWith('video/');
+  }
+  return true;
+}, {
+  message: ValidationErrorMessages.invalidFileType,
+  path: ['mimeType']
+}).refine(data => {
+  // Max file size: 500MB (adjust as needed)
+  const MAX_SIZE = 500 * 1024 * 1024;
+  if (data.fileSize) {
+    return data.fileSize <= MAX_SIZE;
+  }
+  return true;
+}, {
+  message: ValidationErrorMessages.fileSize('500MB'),
+  path: ['fileSize']
+});
+
+// Video metadata validation
+export const videoMetadataSchema = z.object({
+  title: z.string()
+    .min(MIN_TITLE_LENGTH, { message: ValidationErrorMessages.tooShort('Title', MIN_TITLE_LENGTH) })
+    .max(MAX_TITLE_LENGTH, { message: ValidationErrorMessages.tooLong('Title', MAX_TITLE_LENGTH) }),
+  description: z.string()
+    .max(MAX_DESCRIPTION_LENGTH, { message: ValidationErrorMessages.tooLong('Description', MAX_DESCRIPTION_LENGTH) })
+    .optional(),
+  tags: z.array(z.string()
+    .max(MAX_TAG_LENGTH, { message: ValidationErrorMessages.tooLong('Tag', MAX_TAG_LENGTH) }))
+    .max(MAX_TAGS, { message: `Cannot add more than ${MAX_TAGS} tags` })
+    .optional(),
+  recordedAt: z.date().optional(),
+  location: z.object({
+    latitude: z.number().optional(),
+    longitude: z.number().optional(),
+    address: z.string().optional()
+  }).optional()
+});
+
+// Platform-specific validation helpers
+export const platformSpecificValidation = {
+  getVideoConstraints: () => {
+    if (Platform.OS === 'ios') {
+      return {
+        maxFileSize: 1024 * 1024 * 1024, // 1GB
+        maxDuration: 600, // 10 minutes
+        allowedFormats: ['mp4', 'mov']
+      };
+    } else if (Platform.OS === 'android') {
+      return {
+        maxFileSize: 700 * 1024 * 1024, // 700MB
+        maxDuration: 600,
+        allowedFormats: ['mp4', '3gp', 'webm']
+      };
+    } else {
+      return {
+        maxFileSize: 300 * 1024 * 1024, // 300MB
+        maxDuration: 300, // 5 minutes
+        allowedFormats: ['mp4']
+      };
+    }
+  },
+  isVideoFormatSupported: (mimeType: string) => {
+    const format = mimeType.split('/')[1];
+    const constraints = platformSpecificValidation.getVideoConstraints();
+    return constraints.allowedFormats.includes(format);
+  }
+};
+
+// Form validation helper that returns formatted errors
+export function validateForm<T>(schema: z.ZodType<T>, data: unknown): {
+  success: boolean;
+  data?: T;
+  errors?: Record<string, string>;
+} {
+  try {
+    const validData = schema.parse(data);
+    return { success: true, data: validData };
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      const formattedErrors: Record<string, string> = {};
+      error.errors.forEach((err) => {
+        const key = err.path.join('.') || 'form';
+        formattedErrors[key] = err.message;
+      });
+      return { success: false, errors: formattedErrors };
+    }
+    return {
+      success: false,
+      errors: { form: 'An unknown validation error occurred' }
+    };
+  }
+}
+
+// Create a form hook wrapper for validation
+export function useFormValidation<T>(schema: z.ZodType<T>, initialValues: Partial<T>) {
+  const [values, setValues] = useState<Partial<T>>(initialValues);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+
+  const validateField = useCallback((name: keyof T, value: any) => {
+    const fieldSchema = z.object({ [name]: schema.shape[name] });
+    const result = validateForm(fieldSchema, { [name]: value });
+    if (!result.success && result.errors) {
+      setErrors(prev => ({ ...prev, [name]: result.errors![name] || '' }));
+      return false;
+    } else {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+      return true;
+    }
+  }, [schema]);
+
+  const handleChange = useCallback((name: keyof T, value: any) => {
+    setValues(prev => ({ ...prev, [name]: value }));
+    if (touched[name as string]) {
+      validateField(name, value);
+    }
+  }, [touched, validateField]);
+
+  const handleBlur = useCallback((name: keyof T) => {
+    setTouched(prev => ({ ...prev, [name]: true }));
+    validateField(name, values[name]);
+  }, [values, validateField]);
+
+  const validateAll = useCallback(() => {
+    const result = validateForm(schema, values);
+    if (!result.success && result.errors) {
+      setErrors(result.errors);
+      // Mark all fields as touched
+      const allTouched = Object.keys(result.errors).reduce((acc, key) => {
+        acc[key] = true;
+        return acc;
+      }, {} as Record<string, boolean>);
+      setTouched(prev => ({ ...prev, ...allTouched }));
+      return false;
+    }
+    return true;
+  }, [schema, values]);
+
+  return {
+    values,
+    setValues,
+    errors,
+    touched,
+    handleChange,
+    handleBlur,
+    validateAll,
+    validateField
+  };
+}
+
+// User input validation for search
+export const searchQuerySchema = z.string()
+  .trim()
+  .min(1, { message: 'Search query cannot be empty' })
+  .max(100, { message: ValidationErrorMessages.tooLong('Search query', 100) });
+
+// Video crop parameters validation
+export const cropParametersSchema = z.object({
+  x: z.number().min(0),
+  y: z.number().min(0),
+  width: z.number().min(50, { message: 'Width must be at least 50px' }),
+  height: z.number().min(50, { message: 'Height must be at least 50px' })
+});
+
+// User settings validation
+export const userSettingsSchema = z.object({
+  videoQuality: z.enum(['high', 'medium', 'low']),
+  autoSaveEnabled: z.boolean(),
+  darkMode: z.boolean(),
+  notificationsEnabled: z.boolean(),
+  maxCacheSize: z.number().min(100 * 1024 * 1024) // Minimum 100MB
+});
+
+export type VideoMetadataFormValues = z.infer<typeof videoMetadataSchema>;

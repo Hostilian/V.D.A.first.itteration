@@ -1,6 +1,6 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 
 interface ErrorBoundaryProps {
   children: ReactNode;
