@@ -47,6 +47,16 @@ interface SQLTransaction {
 
 // Initialize the database
 export const initDatabase = async (): Promise<void> => {
+  return new Promise<void>((resolve, reject) => {
+    console.log(`Initializing database on platform: ${Platform.OS}`);
+
+    db.transaction(
+      (tx: SQLTransaction) => {
+        // Create videos table if it doesn't exist
+        tx.executeSql(
+          `CREATE TABLE IF NOT EXISTS videos (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
             description TEXT,
             uri TEXT NOT NULL,
             duration REAL NOT NULL,
@@ -57,14 +67,14 @@ export const initDatabase = async (): Promise<void> => {
             console.log('Database initialized successfully');
             resolve();
           },
-          (_: any, error: any) => {
+          (_: SQLTransaction, error: Error) => {
             console.error('Error initializing database:', error);
             reject(error);
             return false;
           }
         );
       },
-      error => {
+      (error: Error) => {
         console.error('Transaction error during database initialization:', error);
         reject(error);
       }
@@ -76,19 +86,9 @@ export const initDatabase = async (): Promise<void> => {
 export const saveVideo = (video: VideoMetadata): Promise<boolean> => {
   return new Promise((resolve, reject) => {
     db.transaction(
-      tx => {
+      (tx: SQLTransaction) => {
         tx.executeSql(
           `INSERT INTO videos (id, name, description, uri, duration, createdAt)
-           VALUES (?, ?, ?, ?, ?, ?);`,
-          [video.id, video.name, video.description, video.uri, video.duration, video.createdAt],
-          () => {
-            resolve(true);
-          },
-          (_, error) => {
-            console.error('Error saving video:', error);
-            reject(error);
-            return false;
-          }
         );
       },
       error => {
