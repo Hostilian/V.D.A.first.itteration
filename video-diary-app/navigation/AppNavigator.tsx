@@ -1,9 +1,9 @@
-import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import React from 'react';
 
-import VideoListScreen from '../screens/VideoListScreen';
 import CreateVideoScreen from '../screens/CreateVideoScreen';
+import VideoListScreen from '../screens/VideoListScreen';
 
 const Stack = createStackNavigator();
 
