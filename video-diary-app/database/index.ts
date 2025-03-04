@@ -38,10 +38,6 @@ export const initDatabase = (): Promise<void> => {
         reject(error);
       },
       () => {
-        console.error('Error initializing database:', error);
-        reject(error);
-      },
-      () => {
         console.log('Database initialized successfully');
         resolve();
       }
@@ -56,20 +52,20 @@ export const executeQuery = (
 ): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     db.transaction(
-      (tx: SQLTransaction) => {
+      (tx) => {
         tx.executeSql(
           query,
           params,
-          (_: SQLTransaction, { rows }: SQLResultSet) => {
+          (_, { rows }) => {
             resolve(rows._array);
           },
-          (_: SQLTransaction, error: SQLError): boolean => {
+          (_, error) => {
             reject(error);
             return false;
           }
         );
       },
-      (error: SQLError) => reject(error)
+      (error) => reject(error)
     );
   });
 };
