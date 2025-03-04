@@ -9,7 +9,8 @@
     "web": "cross-env EXPO_TARGET=web expo start --web",
     "web:alt": "expo export:web && npx serve web-build",
     "prebuild:bypass": "node scripts/prebuild-bypass.js",
-    "fix-sharp": "node scripts/fix-sharp-cli.js"
+    "fix-sharp": "node scripts/fix-sharp-cli.js",
+    "start:safe": "node scripts/start-web-temp.js"
   },
   "dependencies": {
     "@expo/webpack-config": "^19.0.0",

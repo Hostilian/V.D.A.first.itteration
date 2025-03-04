@@ -38,9 +38,9 @@ fs.writeFileSync(tempAppConfigPath, tempConfigContent);
 console.log('✅ Created temporary app.config.js');
 
 try {
-  // Run prebuild with the temporary config
+  // Run prebuild with the temporary config - fixed command arguments
   console.log('🔄 Running expo prebuild with simplified config...');
-  execSync('npx expo prebuild --no-install --skip-dependency-update', {
+  execSync('npx expo prebuild --no-install', {
     stdio: 'inherit',
     env: {
       ...process.env,
