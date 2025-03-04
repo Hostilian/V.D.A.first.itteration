@@ -178,46 +178,44 @@ export const getVideoById = (id: string): Promise<VideoMetadata | null> => {
       (_: Error, error: Error) => {
         console.error('Error fetching video:', error);
         resolve(null);
+        return false;
+      },
+      () => {
+        resolve(video);
+        return true;
+      }
+    );
+  });
+};
 
+// Delete video by ID
+export const deleteVideo = (id: string): Promise<boolean> => {
+  if (Platform.OS === 'web') {
+    // For web, remove from in-memory array
+    webStorageVideos = webStorageVideos.filter(v => v.id !== id);
+    return Promise.resolve(true);
+  }
 
+  return new Promise((resolve) => {
+    const db = openDB();
+    if (!db) return resolve(false);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-};  });    );      }        return true;        resolve(true);      () => {      },        return false;        resolve(false);        console.error('Error deleting video:', error);      (_: Error, error: Error) => {      },        );          [id]          `DELETE FROM videos WHERE id = ?;`,        tx.executeSql(      (tx: SQLite.SQLTransaction) => {    db.transaction(        if (!db) return resolve(false);    const db = openDB();  return new Promise((resolve) => {    }    return Promise.resolve(true);    webStorageVideos = webStorageVideos.filter(v => v.id !== id);    // For web, remove from in-memory array  if (Platform.OS === 'web') {export const deleteVideo = (id: string): Promise<boolean> => {// Delete video by ID};  });    );      }        return true;        resolve(video);      () => {      },        return false;
+    db.transaction(
+      (tx: SQLite.SQLTransaction) => {
+        tx.executeSql(
+          `DELETE FROM videos WHERE id = ?;`,
+          [id]
+        );
+      },
+      (_: Error, error: Error) => {
+        console.error('Error deleting video:', error);
+        resolve(false);
+        return false;
+      },
+      () => {
+        resolve(true);
+        return true;
+      }
+    );
+  });
+};
