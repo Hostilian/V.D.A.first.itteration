@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ResizeMode, Video } from 'expo-av';
+import { Video as ExpoVideo, ResizeMode } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { useRouter } from 'expo-router';
 import React, { useCallback, useRef, useState } from 'react';
@@ -24,7 +24,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function VideoCropScreen() {
   const router = useRouter();
-  const videoRef = useRef<React.ComponentRef<typeof Video>>(null);
+  const videoRef = useRef<React.ComponentRef<typeof ExpoVideo>>(null);
 
   // State for video selection and cropping
   const [videoUri, setVideoUri] = useState<string | null>(null);
@@ -184,7 +184,7 @@ export default function VideoCropScreen() {
               style={styles.videoWrapper}
               onPress={toggleUIVisibility}
             >
-              <Video
+              <ExpoVideo
                 ref={videoRef}
                 source={{ uri: videoUri }}
                 style={styles.video}

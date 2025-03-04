@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query';
 import { Video } from 'expo-av';
+import type { AVPlaybackStatus } from 'expo-av';
 import * as ImagePicker from 'expo-image-picker';
 import { useRef, useState } from 'react';
 import { Alert } from 'react-native';
@@ -68,7 +69,7 @@ export default function useVideoCropping(onSuccess: () => void) {
   };
 
   // Video load handler
-  const handleVideoLoad = (status: any) => {
+  const handleVideoLoad = (status: AVPlaybackStatus) => {
     if (status.durationMillis) {
       const durationSeconds = status.durationMillis / 1000;
       setVideoDuration(durationSeconds);
@@ -78,7 +79,7 @@ export default function useVideoCropping(onSuccess: () => void) {
   };
 
   // Update video position during playback
-  const handlePlaybackStatusUpdate = (status: any) => {
+  const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
     if (status.isLoaded && !status.isBuffering) {
       setCurrentPosition(status.positionMillis / 1000);
     }

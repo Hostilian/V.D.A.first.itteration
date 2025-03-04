@@ -10,7 +10,7 @@ import { formatDuration } from '../../utils/format';
 // Define the form data structure
 type FormData = {
   name: string;
-  description: string; // Changed from optional to required to match store type
+  description: string;
 };
 
 export default function VideoMetadataScreen() {
@@ -27,13 +27,17 @@ export default function VideoMetadataScreen() {
   const { addVideo } = useVideoStore();
 
   // Form setup with React Hook Form
-  const { control, handleSubmit, formState: { errors, isValid, isDirty } } = useForm<FormData>({
+  const { control, handleSubmit, formState: { errors, isValid, isDirty } } = useForm({
     defaultValues: {
       name: '',
-      description: '', // Default empty string instead of undefined
+      description: '',
     },
     mode: 'onChange',
-  });
+  }) as {
+    control: any;
+    handleSubmit: any;
+    formState: { errors: any; isValid: boolean; isDirty: boolean };
+  };
 
   // Format the video duration for display
   const videoDuration = parseFloat(duration);
