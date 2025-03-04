@@ -12,10 +12,16 @@ console.log('=================================================================\n
 
 // Wait a moment for the user to read the message
 setTimeout(() => {
-  // Start the web version
-  console.log('🌐 Starting web version...\n');
+  // Start the web version with our custom entry point
+  console.log('🌐 Starting web version with custom entry point...\n');
   try {
-    execSync('npm run web', { stdio: 'inherit' });
+    execSync('npx webpack serve --mode development --entry ./web-entry.js --open', {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        EXPO_TARGET: 'web'
+      }
+    });
   } catch (error) {
     console.error('Failed to start web version:', error);
   }
