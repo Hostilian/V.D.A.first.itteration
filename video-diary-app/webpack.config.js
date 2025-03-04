@@ -21,22 +21,31 @@ module.exports = async function(env, argv) {
 
   return {
     // Very simple webpack config that doesn't try to process the assets
-  const config = await createExpoWebpackConfigAsync({
-    ...env,
-  }, argv);
-
-  // Use a direct entry point for web that doesn't rely on expo-router
-  config.entry = [
-    path.resolve(__dirname, 'index.web.js')
-  ];
-
-  // Add fallbacks for node modules
-  config.resolve.fallback = {
-    ...config.resolve.fallback,
-    'react-native-screens': false,
-    'react-native/Libraries/Components/View/ViewNativeComponent': 'react-native-web/dist/modules/forwardedProps',
-    'react-native-safe-area-context': 'react-native-web'
-  };
-
-  return config;
-};
+    mode: env.mode || 'development',
+    entry: './index.web.js',
+    output: {
+      path: path.resolve(__dirname, 'web-build'),
+      filename: 'bundle.js',
+    },
+    module: {
+      rules: [
+        {
+          test: /\.(js|jsx|ts|tsx)$/,
+          exclude: /node_modules/,
+          use: {
+            loader: 'babel-loader',
+            options: {
+              presets: ['@babel/preset-env', '@babel/preset-react'],
+            },
+          },
+        },
+      ],
+    },
+    resolve: {
+      extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      alias: {
+        'react-native$': 'react-native-web',
+      },
+    },
+    devServer: {
+      static: {

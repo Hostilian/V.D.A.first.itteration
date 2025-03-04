@@ -3,7 +3,6 @@
 const webpack = require('webpack');
 const WebpackDevServer = require('webpack-dev-server');
 const path = require('path');
-const fs = require('fs');
 const getConfig = require('./webpack.config');
 const net = require('net');
 
@@ -30,11 +29,12 @@ const findAvailablePort = (startPort, callback) => {
   server.listen(startPort);
 };
 
-// Create actual image files instead of empty files
-const createPlaceholderImage = (filePath) => {
-  if (!fs.existsSync(filePath)) {
-    const dir = path.dirname(filePath);
-    if (!fs.existsSync(dir)) {
+async function startWeb() {
+  console.log('Starting web development server...');
+
+  try {
+    // Get webpack config
+    const config = await getConfig({ mode: 'development' }, { mode: 'development' });
       fs.mkdirSync(dir, { recursive: true });
     }
 
