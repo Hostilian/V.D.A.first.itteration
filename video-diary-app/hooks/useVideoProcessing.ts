@@ -1,11 +1,16 @@
-// hooks/useVideoProcessing.ts
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import { cropVideo, extractThumbnail } from '../services/ffmpeg';
 
+interface VideoProcessingResult {
+  videoUri: string;
+  thumbnailUri: string | null;
+  duration: number;
+}
+
 interface UseVideoProcessingProps {
-  onSuccess?: (result: { videoUri: string; thumbnailUri: string | null; duration: number }) => void;
+  onSuccess?: (result: VideoProcessingResult) => void;
   onError?: (error: Error) => void;
 }
 
@@ -35,7 +40,7 @@ export default function useVideoProcessing({ onSuccess, onError }: UseVideoProce
           throw new Error(cropResult.error || 'Failed to crop video');
         }
 
-        // Generate thumbnail from the middle of the segment
+        // Extract thumbnail from middle of the segment for preview
         const thumbnailPosition = startTime + (endTime - startTime) / 2;
         const thumbnailUri = await extractThumbnail(cropResult.outputPath, thumbnailPosition);
         setProgress(1.0);
@@ -58,26 +63,24 @@ export default function useVideoProcessing({ onSuccess, onError }: UseVideoProce
     onError: (error: Error) => {
       console.error('Video processing failed:', error);
       Alert.alert(
+        'Processing Failed',
+        'There was an error processing your video. Please try again.',
+        [{ text: 'OK' }]
+      );
+      if (onError) {
+        onError(error);
+      }
+    },
+  });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-}  };    reset: cropMutation.reset,    progress,    error: cropMutation.error,    isError: cropMutation.isError,    isSuccess: cropMutation.isSuccess,    isProcessing: cropMutation.isPending,    cropVideoAsync: cropMutation.mutateAsync,    cropVideo: cropMutation.mutate,  return {  });    },      }        onError(error);      if (onError) {      );        [{ text: 'OK' }]        'There was an error processing your video. Please try again.',        'Processing Failed',
+  return {
+    cropVideo: cropMutation.mutate,
+    cropVideoAsync: cropMutation.mutateAsync,
+    isProcessing: cropMutation.isPending,
+    isSuccess: cropMutation.isSuccess,
+    isError: cropMutation.isError,
+    error: cropMutation.error,
+    progress,
+    reset: cropMutation.reset,
+  };
+}

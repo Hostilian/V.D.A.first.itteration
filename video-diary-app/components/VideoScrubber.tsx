@@ -1,51 +1,68 @@
+import React, { useState, useEffect, forwardRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ViewStyle } from 'react-native';
 import Slider from '@react-native-community/slider';
-import { AVPlaybackStatus, Video } from 'expo-av';
-import React, { forwardRef, useEffect, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Video, AVPlaybackStatus } from 'expo-av';
 import Animated, {
-  useAnimatedStyle,
   useSharedValue,
-  withTiming
+  useAnimatedStyle,
+  withTiming,
 } from 'react-native-reanimated';
 
 interface VideoScrubberProps {
-  videoUri: string;
-  minSegmentDuration: number;
-  maxDuration: number | null;
+  videoUri?: string | null;
+  startTime: number;
+  endTime: number;
+  minSegmentDuration?: number;
+  maxDuration?: number | null;
   onStartTimeChange: (time: number) => void;
   onEndTimeChange: (time: number) => void;
-  onVideoLoad: (duration: number) => void;
+  onVideoLoad?: (duration: number) => void;
+  onDurationChange?: (duration: number) => void;
 }
 
 const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
-  ({ videoUri, minSegmentDuration = 5, maxDuration = null, onStartTimeChange, onEndTimeChange, onVideoLoad }, ref) => {
-    const [videoDuration, setVideoDuration] = useState(0);
+  ({
+    videoUri,
+    startTime,
+    endTime,
+    minSegmentDuration = 5,
+    maxDuration = null,
+    onStartTimeChange,
+    onEndTimeChange,
+    onVideoLoad,
+    onDurationChange,
+  }, ref) => {
+    const [videoDuration, setVideoDuration] = useState(100); // Default duration
     const [currentPosition, setCurrentPosition] = useState(0);
-    const [startTime, setStartTime] = useState(0);
-    const [endTime, setEndTime] = useState(minSegmentDuration);
     const [isDragging, setIsDragging] = useState(false);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [localStartTime, setLocalStartTime] = useState(startTime);
+    const [localEndTime, setLocalEndTime] = useState(endTime);
+
+    // Update local state when props change
+    useEffect(() => {
+      setLocalStartTime(startTime);
+    }, [startTime]);
+
+    useEffect(() => {
+      setLocalEndTime(endTime);
+    }, [endTime]);
 
     // Animated values for highlight effect
     const highlightOpacity = useSharedValue(0);
 
     useEffect(() => {
-      // Show highlight effect when selection changes
-      highlightOpacity.value = withTiming(0.3, { duration: 300 });
+      // Calculate segment duration when start or end time changes
+      const segmentDuration = localEndTime - localStartTime;
 
-      // Hide highlight after a short delay
-      const timer = setTimeout(() => {
-        highlightOpacity.value = withTiming(0, { duration: 300 });
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }, [startTime, endTime]);
-
-    const highlightStyle = useAnimatedStyle(() => {
-      return {
-        opacity: highlightOpacity.value,
-      };
-    });
+      // Pulse animation if segment is 5 seconds
+      if (Math.abs(segmentDuration - 5) < 0.1) {
+        highlightOpacity.value = 1;
+        setTimeout(() => {
+          highlightOpacity.value = withTiming(0, { duration: 800 });
+        }, 200);
+      }
+    }, [localStartTime, localEndTime]);
 
     const handlePlaybackStatusUpdate = (status: AVPlaybackStatus) => {
       if (!status.isLoaded || isDragging) return;
@@ -55,8 +72,8 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
         setCurrentPosition(position);
 
         // Loop playback within selected segment
-        if (isPlaying && position >= endTime) {
-          seekToPosition(startTime);
+        if (isPlaying && position >= localEndTime) {
+          seekToPosition(localStartTime);
         }
       }
     };
@@ -67,15 +84,13 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
       const duration = status.durationMillis ? status.durationMillis / 1000 : 0;
       setVideoDuration(duration);
 
-      // Initialize end time based on duration and constraints
-      const initialEndTime = Math.min(
-        startTime + minSegmentDuration,
-        maxDuration ? Math.min(maxDuration, duration) : duration
-      );
-      setEndTime(initialEndTime);
+      if (onVideoLoad) {
+        onVideoLoad(duration);
+      }
 
-      // Notify parent component
-      onVideoLoad(duration);
+      if (onDurationChange) {
+        onDurationChange(duration);
+      }
     };
 
     const seekToPosition = async (timeInSeconds: number) => {
@@ -86,10 +101,10 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
 
     const handleStartTimeChange = (value: number) => {
       // Ensure start time doesn't exceed (end time - min segment duration)
-      const maxStartTime = endTime - minSegmentDuration;
+      const maxStartTime = localEndTime - minSegmentDuration;
       const newStartTime = Math.min(value, maxStartTime);
 
-      setStartTime(newStartTime);
+      setLocalStartTime(newStartTime);
       onStartTimeChange(newStartTime);
 
       // Seek to the new start time
@@ -106,10 +121,10 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
 
     const handleEndTimeChange = (value: number) => {
       // Ensure end time is at least (start time + min segment duration)
-      const minEndTime = startTime + minSegmentDuration;
+      const minEndTime = localStartTime + minSegmentDuration;
       const newEndTime = Math.max(value, minEndTime);
 
-      setEndTime(newEndTime);
+      setLocalEndTime(newEndTime);
       onEndTimeChange(newEndTime);
 
       // Seek to the new end time
@@ -132,8 +147,8 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
 
       if (newIsPlaying) {
         // If current position is outside selection, seek to start
-        if (currentPosition < startTime || currentPosition >= endTime) {
-          await seekToPosition(startTime);
+        if (currentPosition < localStartTime || currentPosition >= localEndTime) {
+          await seekToPosition(localStartTime);
         }
         await ref.current.playAsync();
       } else {
@@ -147,17 +162,31 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
       return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    // Calculate positions for the selection highlight overlay
-    const getSelectionStyle = () => {
-      const startPercent = (startTime / videoDuration) * 100;
-      const endPercent = (endTime / videoDuration) * 100;
+    // Calculate positions for the selection highlight overlay as numbers (not strings)
+    const getSelectionStyle = (): ViewStyle => {
+      const startPercent = (localStartTime / Math.max(1, videoDuration)) * 100;
+      const endPercent = (localEndTime / Math.max(1, videoDuration)) * 100;
       const widthPercent = endPercent - startPercent;
 
       return {
-        left: `${startPercent}%`,
-        width: `${widthPercent}%`,
+        left: `${startPercent}%` as any, // Cast to any to make TypeScript happy
+        width: `${widthPercent}%` as any, // Cast to any to make TypeScript happy
       };
     };
+
+    // Same for the progress indicator
+    const getProgressIndicatorStyle = (): ViewStyle => {
+      const positionPercent = (currentPosition / Math.max(1, videoDuration)) * 100;
+      return {
+        left: `${positionPercent}%` as any, // Cast to any to make TypeScript happy
+      };
+    };
+
+    const animatedHighlightStyle = useAnimatedStyle(() => {
+      return {
+        opacity: highlightOpacity.value,
+      };
+    });
 
     return (
       <View style={styles.container}>
@@ -165,7 +194,7 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
           <Text style={styles.timeText}>Current: {formatTime(currentPosition)}</Text>
           <TouchableOpacity style={styles.playButton} onPress={togglePlayback}>
             <Text style={styles.playButtonText}>
-              {isPlaying ? 'Pause' : 'Play Selection'}
+              {isPlaying ? 'Pause' : 'Play'}
             </Text>
           </TouchableOpacity>
           <Text style={styles.timeText}>Total: {formatTime(videoDuration)}</Text>
@@ -179,24 +208,24 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
           <View style={[styles.selectionOverlay, getSelectionStyle()]} />
 
           {/* Animated highlight effect */}
-          <Animated.View style={[styles.highlightEffect, getSelectionStyle(), highlightStyle]} />
+          <Animated.View style={[styles.highlightEffect, getSelectionStyle(), animatedHighlightStyle]} />
 
           {/* Progress indicator */}
           <View
             style={[
               styles.progressIndicator,
-              { left: `${(currentPosition / videoDuration) * 100}%` },
+              getProgressIndicatorStyle(),
             ]}
           />
         </View>
 
         <View style={styles.controlsContainer}>
-          <Text style={styles.label}>Start: {formatTime(startTime)}</Text>
+          <Text style={styles.label}>Start: {formatTime(localStartTime)}</Text>
           <Slider
             style={styles.slider}
             minimumValue={0}
             maximumValue={Math.max(0, videoDuration - minSegmentDuration)}
-            value={startTime}
+            value={localStartTime}
             onValueChange={handleStartTimeChange}
             onSlidingStart={() => setIsDragging(true)}
             onSlidingComplete={() => setIsDragging(false)}
@@ -206,12 +235,12 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
             step={0.1}
           />
 
-          <Text style={styles.label}>End: {formatTime(endTime)}</Text>
+          <Text style={styles.label}>End: {formatTime(localEndTime)}</Text>
           <Slider
             style={styles.slider}
-            minimumValue={startTime + minSegmentDuration}
+            minimumValue={localStartTime + minSegmentDuration}
             maximumValue={videoDuration}
-            value={endTime}
+            value={localEndTime}
             onValueChange={handleEndTimeChange}
             onSlidingStart={() => setIsDragging(true)}
             onSlidingComplete={() => setIsDragging(false)}
@@ -223,7 +252,7 @@ const VideoScrubber = forwardRef<Video, VideoScrubberProps>(
 
           <View style={styles.segmentInfo}>
             <Text style={styles.segmentDuration}>
-              Selected Segment: {(endTime - startTime).toFixed(1)} seconds
+              Selected Segment: {(localEndTime - localStartTime).toFixed(1)} seconds
             </Text>
           </View>
         </View>
@@ -291,31 +320,33 @@ const styles = StyleSheet.create({
     top: 6,
     width: 3,
     height: 12,
-    backgroundColor: '#ff3b30',
-    borderRadius: 1.5,
-    marginLeft: -1.5,
-  },
-  controlsContainer: {
-    marginTop: 10,
-  },
-  label: {
-    fontSize: 14,
-    color: '#333',
-    marginBottom: 4,
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  segmentInfo: {
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  segmentDuration: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#4285F4',
-  },
-});
 
-export default VideoScrubber;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export default VideoScrubber;});  },    color: '#4285F4',    fontWeight: 'bold',    fontSize: 16,  segmentDuration: {  },    marginTop: 8,    alignItems: 'center',  segmentInfo: {  },    height: 40,    width: '100%',  slider: {  },    marginBottom: 4,    color: '#333',    fontSize: 14,  label: {  },    marginTop: 10,  controlsContainer: {  },    marginLeft: -1.5,    borderRadius: 1.5,    backgroundColor: '#ff3b30',

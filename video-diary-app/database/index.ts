@@ -2,17 +2,28 @@ import * as SQLite from 'expo-sqlite';
 import { Platform } from 'react-native';
 import { WebSQLite } from '../lib/web/sqlite-mock';
 
+// SQLite transaction and result types
+type SQLTransaction = SQLite.SQLTransaction;
+type SQLResultSet = SQLite.SQLResultSet;
+type SQLError = SQLite.SQLError;
+
 // Use the web SQLite mock for web platform
-const openDatabase = Platform.OS === 'web' ? WebSQLite.openDatabase : SQLite.openDatabase;
+const getDatabase = () => {
+  if (Platform.OS === 'web') {
+    return WebSQLite.openDatabase('videoDiary.db');
+  } else {
+    return SQLite.openDatabase('videoDiary.db');
+  }
+};
 
 // Open the database
-const db = openDatabase('videoDiary.db');
+const db = getDatabase();
 
 // Initialize database tables
 export const initDatabase = (): Promise<void> => {
   return new Promise((resolve, reject) => {
     db.transaction(
-      (tx) => {
+      (tx: SQLTransaction) => {
         // Create videos table
         tx.executeSql(
           `CREATE TABLE IF NOT EXISTS videos (
@@ -26,7 +37,7 @@ export const initDatabase = (): Promise<void> => {
           )`
         );
       },
-      (error) => {
+      (error: SQLError) => {
         console.error('Error initializing database:', error);
         reject(error);
       },
@@ -45,20 +56,30 @@ export const executeQuery = (
 ): Promise<any[]> => {
   return new Promise((resolve, reject) => {
     db.transaction(
-      (tx) => {
+      (tx: SQLTransaction) => {
         tx.executeSql(
           query,
           params,
-          (_, { rows }) => {
+          (_: SQLTransaction, { rows }: SQLResultSet) => {
             resolve(rows._array);
           },
-          (_, error): boolean => {
+          (_: SQLTransaction, error: SQLError): boolean => {
             reject(error);
             return false;
           }
         );
       },
-      (error) => reject(error)
+      (error: SQLError) => reject(error)
     );
   });
+};
+
+// Get a single record by id
+export const getById = async (table: string, id: string): Promise<any | null> => {
+  const results = await executeQuery(
+    `SELECT * FROM ${table} WHERE id = ?`,
+    [id]
+  );
+
+  return results.length > 0 ? results[0] : null;
 };
