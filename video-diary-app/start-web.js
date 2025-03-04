@@ -89,6 +89,9 @@ async function startWeb() {
         process.exit(1);
       }
 
+      // Dynamically import mime package
+      const mime = await import('mime');
+
       // Create server with dynamic port
       const server = new WebpackDevServer({
         open: true,
@@ -98,10 +101,13 @@ async function startWeb() {
           {
             directory: path.join(__dirname, 'web-template'),
             watch: true,
+            serveIndex: true,
           },
           {
             directory: path.join(__dirname, 'assets'),
             publicPath: '/assets',
+            watch: true,
+            serveIndex: true,
           }
         ],
         devMiddleware: {
