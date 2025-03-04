@@ -1,0 +1,15 @@
+{
+  "models": {
+    "claude": {
+      "version": "3.7",
+      "model": "sonnet",
+      "enabled": true,
+      "preview": true,
+      "clientScope": "all"
+    },
+    "settings": {
+      "applyToAllClients": true,
+      "previewFeatures": true
+    }
+  }
+}
