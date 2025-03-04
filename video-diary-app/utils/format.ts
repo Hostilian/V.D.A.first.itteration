@@ -1,5 +1,5 @@
 /**
- * Format a duration in seconds to a human-readable string
+ * Format a duration in seconds to a human-readable string (MM:SS or HH:MM:SS)
  * @param seconds - Duration in seconds
  * @returns Formatted string in MM:SS or HH:MM:SS format
  */

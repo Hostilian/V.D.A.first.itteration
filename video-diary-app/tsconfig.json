@@ -9,8 +9,7 @@
     "skipLibCheck": true,
     "typeRoots": [
       "./node_modules/@types",
-      "./@types",
-      "./types"
+      "./typings"
     ],
     "jsx": "react-native",
     "esModuleInterop": true,
@@ -28,7 +27,8 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "types/**/*.ts",
-    "types/**/*.d.ts"
+    "types/**/*.d.ts",
+    "typings/*.d.ts"
   ],
   "exclude": [
     "node_modules",
