@@ -1,3 +1,11 @@
+# Video Diary App - Project Setup and Structure
+
+Let me provide a comprehensive setup guide for the SevenApps React Native Video Diary App case study. I'll create the missing screens and components that integrate with the existing files.
+
+## Initial Setup Commands
+
+First, let's set up the project with all needed dependencies:
+
 # Create a new Expo project with TypeScript template
 npx create-expo-app@latest video-diary-app --template typescript
 
