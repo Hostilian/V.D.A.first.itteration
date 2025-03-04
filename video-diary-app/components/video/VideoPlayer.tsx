@@ -1,36 +1,54 @@
 // components/video/VideoPlayer.tsx
 import { ResizeMode, Video } from 'expo-av';
 import React from 'react';
-import { View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { VideoMetadata } from '../../types';
 
 interface VideoPlayerProps {
   video: VideoMetadata;
   shouldPlay?: boolean;
-  style?: any;
 }
 
-export const VideoPlayer: React.FC<VideoPlayerProps> = ({
-  video,
-  shouldPlay = false,
-  style = {}
-}) => {
-  const videoRef = React.useRef<Video>(null);
+export const VideoPlayer: React.FC<VideoPlayerProps> = ({ video, shouldPlay = false }) => {
+  if (Platform.OS === 'web') {
+    // For web, use HTML video element
+    return (
+      <View style={styles.container}>
+        <video
+          src={video.uri}
+          controls
+          autoPlay={shouldPlay}
+          style={{ width: '100%', height: '100%' }}
+        />
+      </View>
+    );
+  }
 
   return (
-    <View className="w-full aspect-video rounded-lg overflow-hidden" style={style}>
+    <View style={styles.container}>
       <Video
-        ref={videoRef}
         source={{ uri: video.uri }}
         rate={1.0}
         volume={1.0}
         isMuted={false}
-        resizeMode={ResizeMode.CONTAIN}
+        resizeMode={ResizeMode.COVER}
         shouldPlay={shouldPlay}
         isLooping={false}
-        className="w-full h-full"
         useNativeControls
+        style={styles.video}
       />
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    width: '100%',
+    height: 250,
+    backgroundColor: '#000',
+  },
+  video: {
+    width: '100%',
+    height: '100%',
+  },
+});

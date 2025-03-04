@@ -6,7 +6,7 @@ import React, { useEffect } from 'react';
 import { initDatabase } from '../lib/db';
 
 const queryClient = new QueryClient();
-const db = SQLite.openDatabase('myDatabase.db');
+const db = SQLite.openDatabaseSync('myDatabase.db');
 
 export default function AppLayout() {
   useEffect(() => {

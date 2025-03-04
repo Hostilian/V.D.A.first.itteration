@@ -1,8 +1,8 @@
-// components/modals/CropModal.tsx
 import { MaterialIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import { nanoid } from 'nanoid';
 import React, { useCallback, useState } from 'react';
-import { Modal, Pressable, SafeAreaView, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Platform, Pressable, SafeAreaView, Text, View } from 'react-native';
 import { useVideoProcessing } from '../../hooks/useVideoProcessing';
 import { VideoMetadataFormValues } from '../../lib/validation';
 import { CropSettings, VideoMetadata } from '../../types';
@@ -29,8 +29,9 @@ export const CropModal: React.FC<CropModalProps> = ({
   const [step, setStep] = useState<Step>(Step.SELECT_VIDEO);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
   const [cropSettings, setCropSettings] = useState<CropSettings>({ startTime: 0, endTime: 5 });
+  const [croppedVideoUri, setCroppedVideoUri] = useState<string | null>(null);
 
-  const { cropVideo, isProcessing, data: croppedVideoUri } = useVideoProcessing();
+  const { cropVideo, isProcessing } = useVideoProcessing();
 
   const handleVideoSelect = async () => {
     try {
@@ -39,8 +40,8 @@ export const CropModal: React.FC<CropModalProps> = ({
         copyToCacheDirectory: true,
       });
 
-      if (result.assets && result.assets.length > 0) {
-        setSelectedVideo(result.assets.uri);
+      if (result.canceled === false && result.assets && result.assets.length > 0) {
+        setSelectedVideo(result.assets[0].uri);
         setStep(Step.CROP_VIDEO);
       }
     } catch (error) {
@@ -52,23 +53,30 @@ export const CropModal: React.FC<CropModalProps> = ({
     setCropSettings(settings);
   }, []);
 
-  const handleCropVideo = () => {
+  const handleCropVideo = async () => {
     if (selectedVideo) {
-      cropVideo({
-        videoUri: selectedVideo,
-        settings: cropSettings
-      });
-      setStep(Step.ADD_METADATA);
+      const result = await cropVideo(
+        selectedVideo,
+        cropSettings.startTime,
+        cropSettings.endTime - cropSettings.startTime
+      );
+
+      if (result) {
+        setCroppedVideoUri(result);
+        setStep(Step.ADD_METADATA);
+      }
     }
   };
 
   const handleSaveVideo = (metadata: VideoMetadataFormValues) => {
-    if (croppedVideoUri) {
+    const effectiveVideoUri = Platform.OS === 'web' ? selectedVideo : croppedVideoUri;
+
+    if (effectiveVideoUri) {
       const newVideo: VideoMetadata = {
-        id: `video-${Date.now()}`,
+        id: nanoid(),
         name: metadata.name,
         description: metadata.description || '',
-        uri: croppedVideoUri,
+        uri: effectiveVideoUri,
         duration: cropSettings.endTime - cropSettings.startTime,
         createdAt: new Date().toISOString(),
       };
@@ -83,6 +91,11 @@ export const CropModal: React.FC<CropModalProps> = ({
     setStep(Step.SELECT_VIDEO);
     setSelectedVideo(null);
     setCropSettings({ startTime: 0, endTime: 5 });
+  };
+
+  const handleClose = () => {
+    resetModal();
+    onClose();
   };
 
   const renderStepContent = () => {
@@ -140,11 +153,20 @@ export const CropModal: React.FC<CropModalProps> = ({
               Add Details
             </Text>
 
-            <MetadataForm
-              onSubmit={handleSaveVideo}
-              submitLabel="Save Video"
-              isLoading={isProcessing}
-            />
+            {isProcessing ? (
+              <View className="flex-1 items-center justify-center">
+                <ActivityIndicator size="large" color="#0000ff" />
+                <Text className="mt-4 text-base text-gray-600">
+                  Processing video...
+                </Text>
+              </View>
+            ) : (
+              <MetadataForm
+                onSubmit={handleSaveVideo}
+                submitLabel="Save Video"
+                isLoading={isProcessing}
+              />
+            )}
           </View>
         );
     }
@@ -154,10 +176,7 @@ export const CropModal: React.FC<CropModalProps> = ({
     <Modal
       visible={isVisible}
       animationType="slide"
-      onRequestClose={() => {
-        resetModal();
-        onClose();
-      }}
+      onRequestClose={handleClose}
     >
       <SafeAreaView className="flex-1 bg-white">
         <View className="flex-row justify-between items-center p-4 border-b border-gray-200">
@@ -167,10 +186,7 @@ export const CropModal: React.FC<CropModalProps> = ({
           </Text>
 
           <Pressable
-            onPress={() => {
-              resetModal();
-              onClose();
-            }}
+            onPress={handleClose}
             hitSlop={10}
           >
             <MaterialIcons name="close" size={24} color="#000" />
