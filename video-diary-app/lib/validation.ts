@@ -1,9 +1,211 @@
 // lib/validation.ts
 import { z } from 'zod';
+import { Platform } from 'react-native';
+import { useState, useCallback } from 'react';
 
-export const videoMetadataSchema = z.object({
-  name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
-  description: z.string().max(500, 'Description is too long').optional(),
-});
+// Basic validation constants
+const MIN_TITLE_LENGTH = 3;
+const MAX_TITLE_LENGTH = 100;
+const MAX_DESCRIPTION_LENGTH = 500;
+const MAX_TAG_LENGTH = 30;
+const MAX_TAGS = 10;
 
-export type VideoMetadataFormValues = z.infer<typeof videoMetadataSchema>;
+// Common error messages
+export const ValidationErrorMessages = {
+  required: 'This field is required',
+  tooShort: (field: string, min: number) => `${field} must be at least ${min} characters`,
+  tooLong: (field: string, max: number) => `${field} cannot exceed ${max} characters`,
+  invalidFormat: (field: string) => `${field} format is invalid`,
+  fileSize: (maxSize: string) => `File size should not exceed ${maxSize}`,
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+export type VideoMetadataFormValues = z.infer<typeof videoMetadataSchema>;};  }    return constraints.allowedFormats.includes(format);    const format = mimeType.split('/')[1];    const constraints = platformSpecificValidation.getVideoConstraints();  isVideoFormatSupported: (mimeType: string) => {    },    }      };        allowedFormats: ['mp4']        maxFileSize: 300 * 1024 * 1024, // 300MB        maxDuration: 300, // 5 minutes      return {    } else {      };        allowedFormats: ['mp4', '3gp', 'webm']        maxFileSize: 700 * 1024 * 1024, // 700MB        maxDuration: 600,      return {    } else if (Platform.OS === 'android') {      };        allowedFormats: ['mp4', 'mov']        maxFileSize: 1024 * 1024 * 1024, // 1GB        maxDuration: 600, // 10 minutes      return {    if (Platform.OS === 'ios') {  getVideoConstraints: () => {export const platformSpecificValidation = {// Platform-specific validation helpers}  };    validateField    validateAll,    handleBlur,    handleChange,    touched,    errors,    setValues,    values,  return {    }, [schema, values]);    return true;    }      return false;      setTouched(prev => ({ ...prev, ...allTouched }));      }, {} as Record<string, boolean>);        return acc;        acc[key] = true;      const allTouched = Object.keys(result.errors).reduce((acc, key) => {      // Mark all fields as touched      setErrors(result.errors);    if (!result.success && result.errors) {    const result = validateForm(schema, values);  const validateAll = useCallback(() => {    }, [values, validateField]);    validateField(name, values[name]);    setTouched(prev => ({ ...prev, [name]: true }));  const handleBlur = useCallback((name: keyof T) => {    }, [touched, validateField]);    }      validateField(name, value);    if (touched[name as string]) {    setValues(prev => ({ ...prev, [name]: value }));  const handleChange = useCallback((name: keyof T, value: any) => {    }, [schema]);    }      return true;      setErrors(prev => ({ ...prev, [name]: '' }));    } else {      return false;      setErrors(prev => ({ ...prev, [name]: result.errors![name] || '' }));    if (!result.success && result.errors) {        const result = validateForm(fieldSchema, { [name]: value });    const fieldSchema = z.object({ [name]: schema.shape[name] });  const validateField = useCallback((name: keyof T, value: any) => {    const [touched, setTouched] = useState<Record<string, boolean>>({});  const [errors, setErrors] = useState<Record<string, string>>({});  const [values, setValues] = useState<Partial<T>>(initialValues);export function useFormValidation<T>(schema: z.ZodType<T>, initialValues: Partial<T>) {// Create a form hook wrapper for validation}  }    };      errors: { form: 'An unknown validation error occurred' }       success: false,     return {         }      return { success: false, errors: formattedErrors };            });        formattedErrors[key] = err.message;        const key = err.path.join('.') || 'form';      error.errors.forEach((err) => {            const formattedErrors: Record<string, string> = {};    if (error instanceof z.ZodError) {  } catch (error) {    return { success: true, data: validData };    const validData = schema.parse(data);  try {} {  errors?: Record<string, string>   data?: T;  success: boolean;export function validateForm<T>(schema: z.ZodType<T>, data: unknown): { // Form validation helper that returns formatted errors});  maxCacheSize: z.number().min(100 * 1024 * 1024) // Minimum 100MB  notificationsEnabled: z.boolean(),  darkMode: z.boolean(),  autoSaveEnabled: z.boolean(),  videoQuality: z.enum(['high', 'medium', 'low']),export const userSettingsSchema = z.object({// User settings validation});  height: z.number().min(50, { message: 'Height must be at least 50px' })  width: z.number().min(50, { message: 'Width must be at least 50px' }),  y: z.number().min(0),  x: z.number().min(0),export const cropParametersSchema = z.object({// Video crop parameters validation  .max(100, { message: ValidationErrorMessages.tooLong('Search query', 100) });  .min(1, { message: 'Search query cannot be empty' })  .trim()export const searchQuerySchema = z.string()// User input validation for search});  }).optional()    address: z.string().optional()    longitude: z.number().optional(),    latitude: z.number().optional(),  location: z.object({  recordedAt: z.date().optional(),    .optional(),    .max(MAX_TAGS, { message: `Cannot add more than ${MAX_TAGS} tags` })    .max(MAX_TAG_LENGTH, { message: ValidationErrorMessages.tooLong('Tag', MAX_TAG_LENGTH) }))  tags: z.array(z.string()    .optional(),    .max(MAX_DESCRIPTION_LENGTH, { message: ValidationErrorMessages.tooLong('Description', MAX_DESCRIPTION_LENGTH) })  description: z.string()    .max(MAX_TITLE_LENGTH, { message: ValidationErrorMessages.tooLong('Title', MAX_TITLE_LENGTH) }),    .min(MIN_TITLE_LENGTH, { message: ValidationErrorMessages.tooShort('Title', MIN_TITLE_LENGTH) })  title: z.string()export const videoMetadataSchema = z.object({// Video metadata validation});  path: ['fileSize']  message: ValidationErrorMessages.fileSize('500MB'),}, {  return true;  }    return data.fileSize <= MAX_SIZE;  if (data.fileSize) {  const MAX_SIZE = 500 * 1024 * 1024;  // Max file size: 500MB (adjust as needed)}).refine(data => {  path: ['mimeType']  message: ValidationErrorMessages.invalidFileType,}, {  return true;  }    return data.mimeType.startsWith('video/');  if (data.mimeType) {}).refine(data => {  duration: z.number().optional()  mimeType: z.string().optional(),  fileSize: z.number().optional(),  uri: z.string().min(1, { message: ValidationErrorMessages.required }),export const videoFileSchema = z.object({// Video file validation};  invalidFileType: 'File type not supported'
