@@ -1,5 +1,6 @@
 const createExpoWebpackConfigAsync = require('@expo/webpack-config');
 const path = require('path');
+const webpack = require('webpack');
 const fs = require('fs');
 
 // Create a simple empty file for the assets if they don't exist
@@ -22,19 +23,12 @@ module.exports = async function(env, argv) {
 
   const config = await createExpoWebpackConfigAsync({
     ...env,
-    babel: {
-      dangerouslyAddModulePathsToTranspile: [
-        'expo-router',
-      ]
-    }
   }, argv);
 
-  // Add module aliases to resolve the missing modules
-  config.resolve.alias = {
-    ...config.resolve.alias,
-    'expo/dom': path.resolve(__dirname, './expo-dom-polyfill.js'),
-    'expo/dom/global': path.resolve(__dirname, './expo-dom-polyfill.js')
-  };
+  // Use a direct entry point for web that doesn't rely on expo-router
+  config.entry = [
+    path.resolve(__dirname, 'index.web.js')
+  ];
 
   // Add fallbacks for node modules
   config.resolve.fallback = {
