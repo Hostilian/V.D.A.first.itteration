@@ -1,11 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect } from 'react';
-import { Text, View } from 'react-native';
+import { Text } from 'react-native';
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSequence,
-  withTiming,
+    useAnimatedStyle,
+    useSharedValue,
+    withSequence,
+    withTiming,
 } from 'react-native-reanimated';
 
 interface ToastProps {
