@@ -158,11 +158,11 @@ export const getVideoById = (id: string): Promise<VideoMetadata | null> => {
           [id],
           (_: SQLTransaction, { rows }: DBRows) => {
             if (rows.length > 0) {
-              resolve(null);
-            }
-          },
-          (_, error) => {
-            console.error('Error fetching video by ID:', error);
+              const row = rows.item(0);
+              resolve({
+                id: row.id,
+                name: row.name,
+                description: row.description || '',
             reject(error);
             return false;
           }
