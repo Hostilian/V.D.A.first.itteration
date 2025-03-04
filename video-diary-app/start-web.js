@@ -35,49 +35,6 @@ async function startWeb() {
   try {
     // Get webpack config
     const config = await getConfig({ mode: 'development' }, { mode: 'development' });
-      fs.mkdirSync(dir, { recursive: true });
-    }
-
-    // Create a simple 1x1 transparent PNG (proper PNG format)
-    const transparentPNG = Buffer.from(
-      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
-      'base64'
-    );
-
-    fs.writeFileSync(filePath, transparentPNG);
-    console.log(`Created placeholder image: ${filePath}`);
-  }
-};
-
-// Special function to directly create all missing assets
-const ensureAssetsExist = () => {
-  const assetFiles = [
-    'icon.png',
-    'favicon.png',
-    'splash.png',
-    'adaptive-icon.png'
-  ];
-
-  const assetsDir = path.resolve(__dirname, 'assets');
-  if (!fs.existsSync(assetsDir)) {
-    fs.mkdirSync(assetsDir, { recursive: true });
-  }
-
-  assetFiles.forEach(file => {
-    const filePath = path.resolve(assetsDir, file);
-    createPlaceholderImage(filePath);
-  });
-};
-
-async function startWeb() {
-  console.log('Starting web development server...');
-
-  // Create placeholder assets
-  ensureAssetsExist();
-
-  try {
-    // Get webpack config
-    const config = await getConfig({ mode: 'development' }, { mode: 'development' });
 
     // Create compiler
     const compiler = webpack(config);
@@ -89,54 +46,14 @@ async function startWeb() {
         process.exit(1);
       }
 
-      // Dynamically import mime package
-      const mime = await import('mime');
-
-      // Create server with dynamic port
+      // Create server with dynamic port - simplified config
       const server = new WebpackDevServer({
         open: true,
-        historyApiFallback: true,
         port,
-        static: [
-          {
-            directory: path.join(__dirname, 'web-template'),
-            watch: true,
-            serveIndex: true,
-            staticOptions: {
-              setHeaders: (res, filePath) => {
-                const mimeType = mime.getType(filePath);
-                if (mimeType) {
-                  res.setHeader('Content-Type', mimeType);
-                }
-              }
-            }
-          },
-          {
-            directory: path.join(__dirname, 'assets'),
-            publicPath: '/assets',
-            watch: true,
-            serveIndex: true,
-            staticOptions: {
-              setHeaders: (res, filePath) => {
-                const mimeType = mime.getType(filePath);
-                if (mimeType) {
-                  res.setHeader('Content-Type', mimeType);
-                }
-              }
-            }
-          }
-        ],
-        devMiddleware: {
-          publicPath: '/',
-          writeToDisk: true,
+        static: {
+          directory: path.join(__dirname, 'web-template'),
         },
-        client: {
-          overlay: {
-            errors: true,
-            warnings: false,
-          },
-        },
-        hot: true,
+        historyApiFallback: true,
       }, compiler);
 
       // Start server
