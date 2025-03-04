@@ -6,7 +6,7 @@ const db = SQLite.openDatabase('videoDiary.db');
 
 export const initDatabase = () => {
   return new Promise<void>((resolve, reject) => {
-    db.transaction(tx => {
+    db.transaction((tx: SQLite.SQLTransaction) => {
       tx.executeSql(
         `CREATE TABLE IF NOT EXISTS videos (
           id TEXT PRIMARY KEY NOT NULL,
@@ -18,7 +18,7 @@ export const initDatabase = () => {
         );`,
         [],
         () => { resolve(); },
-        (_, error) => { reject(error); return false; }
+        (tx: SQLite.SQLTransaction, error: SQLite.SQLError) => { reject(error); return true; }
       );
     });
   });
@@ -26,13 +26,13 @@ export const initDatabase = () => {
 
 export const saveVideo = (video: VideoMetadata) => {
   return new Promise<void>((resolve, reject) => {
-    db.transaction(tx => {
+    db.transaction((tx: SQLite.SQLTransaction) => {
       tx.executeSql(
         `INSERT INTO videos (id, name, description, uri, duration, createdAt)
          VALUES (?, ?, ?, ?, ?, ?);`,
         [video.id, video.name, video.description, video.uri, video.duration, video.createdAt],
         () => { resolve(); },
-        (_, error) => { reject(error); return false; }
+        (tx: SQLite.SQLTransaction, error: SQLite.SQLError) => { reject(error); return true; }
       );
     });
   });
@@ -40,14 +40,14 @@ export const saveVideo = (video: VideoMetadata) => {
 
 export const getVideos = () => {
   return new Promise<VideoMetadata[]>((resolve, reject) => {
-    db.transaction(tx => {
+    db.transaction((tx: SQLite.SQLTransaction) => {
       tx.executeSql(
         'SELECT * FROM videos ORDER BY createdAt DESC;',
         [],
-        (_, { rows }) => {
+        (_, { rows }: SQLite.SQLResultSet) => {
           resolve(rows._array as VideoMetadata[]);
         },
-        (_, error) => { reject(error); return false; }
+        (tx: SQLite.SQLTransaction, error: SQLite.SQLError) => { reject(error); return true; }
       );
     });
   });
@@ -55,18 +55,18 @@ export const getVideos = () => {
 
 export const getVideoById = (id: string) => {
   return new Promise<VideoMetadata | null>((resolve, reject) => {
-    db.transaction(tx => {
+    db.transaction((tx: SQLite.SQLTransaction) => {
       tx.executeSql(
         'SELECT * FROM videos WHERE id = ?;',
         [id],
-        (_, { rows }) => {
+        (_, { rows }: SQLite.SQLResultSet) => {
           if (rows.length > 0) {
             resolve(rows.item(0) as VideoMetadata);
           } else {
             resolve(null);
           }
         },
-        (_, error) => { reject(error); return false; }
+        (tx: SQLite.SQLTransaction, error: SQLite.SQLError) => { reject(error); return true; }
       );
     });
   });
@@ -79,12 +79,12 @@ export const updateVideoById = (id: string, data: Partial<VideoMetadata>) => {
   const setClause = fields.map(field => `${field} = ?`).join(', ');
 
   return new Promise<void>((resolve, reject) => {
-    db.transaction(tx => {
+    db.transaction((tx: SQLite.SQLTransaction) => {
       tx.executeSql(
         `UPDATE videos SET ${setClause} WHERE id = ?;`,
         [...values, id],
         () => { resolve(); },
-        (_, error) => { reject(error); return false; }
+        (tx: SQLite.SQLTransaction, error: SQLite.SQLError) => { reject(error); return true; }
       );
     });
   });
