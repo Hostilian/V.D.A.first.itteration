@@ -39,12 +39,10 @@ module.exports = async function(env, argv) {
   // Add fallbacks for node modules
   config.resolve.fallback = {
     ...config.resolve.fallback,
+    'react-native-screens': false,
+    'react-native/Libraries/Components/View/ViewNativeComponent': 'react-native-web/dist/modules/forwardedProps',
+    'react-native-safe-area-context': 'react-native-web'
+  };
 
-
-
-
-
-
-
-
-};  return config;  };    'react-native-safe-area-context': 'react-native-web'    'react-native/Libraries/Components/View/ViewNativeComponent': 'react-native-web/dist/modules/forwardedProps',    'react-native-screens': false,
+  return config;
+};
