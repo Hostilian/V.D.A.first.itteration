@@ -6,6 +6,7 @@ const path = require('path');
 const fs = require('fs');
 const getConfig = require('./webpack.config');
 const net = require('net');
+const mime = require('mime');
 
 // Function to find an available port
 const findAvailablePort = (startPort, callback) => {
@@ -89,9 +90,6 @@ async function startWeb() {
         process.exit(1);
       }
 
-      // Dynamically import mime package
-      const mime = await import('mime');
-
       // Create server with dynamic port
       const server = new WebpackDevServer({
         open: true,
@@ -102,12 +100,24 @@ async function startWeb() {
             directory: path.join(__dirname, 'web-template'),
             watch: true,
             serveIndex: true,
+            setHeaders: (res, filePath) => {
+              const mimeType = mime.getType(filePath);
+              if (mimeType) {
+                res.setHeader('Content-Type', mimeType);
+              }
+            },
           },
           {
             directory: path.join(__dirname, 'assets'),
             publicPath: '/assets',
             watch: true,
             serveIndex: true,
+            setHeaders: (res, filePath) => {
+              const mimeType = mime.getType(filePath);
+              if (mimeType) {
+                res.setHeader('Content-Type', mimeType);
+              }
+            },
           }
         ],
         devMiddleware: {
