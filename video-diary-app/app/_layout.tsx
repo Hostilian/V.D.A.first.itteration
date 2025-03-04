@@ -5,6 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { StatusBar } from 'expo-status-bar';
 import { initDatabase } from '../database';
+import { ToastProvider } from '../context/ToastContext';
 
 // Create a client for React Query
 const queryClient = new QueryClient({
@@ -34,29 +35,31 @@ export default function RootLayout() {
     <QueryClientProvider client={queryClient}>
       <SafeAreaProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <StatusBar style="dark" />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              animation: 'slide_from_right',
-            }}
-          >
-            <Stack.Screen name="index" />
-            <Stack.Screen name="video/[id]" />
-            <Stack.Screen
-              name="video/crop"
-              options={{
-                presentation: 'modal',
-                animation: 'slide_from_bottom',
-              }}
-            />
-            <Stack.Screen
-              name="video/metadata"
-              options={{
+          <ToastProvider>
+            <StatusBar style="dark" />
+            <Stack
+              screenOptions={{
+                headerShown: false,
                 animation: 'slide_from_right',
               }}
-            />
-          </Stack>
+            >
+              <Stack.Screen name="index" />
+              <Stack.Screen name="video/[id]" />
+              <Stack.Screen
+                name="video/crop"
+                options={{
+                  presentation: 'modal',
+                  animation: 'slide_from_bottom',
+                }}
+              />
+              <Stack.Screen
+                name="video/metadata"
+                options={{
+                  animation: 'slide_from_right',
+                }}
+              />
+            </Stack>
+          </ToastProvider>
         </GestureHandlerRootView>
       </SafeAreaProvider>
     </QueryClientProvider>
