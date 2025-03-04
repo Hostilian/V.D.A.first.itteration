@@ -46,7 +46,7 @@ module.exports = {
     static: {
       directory: path.join(__dirname, 'web-template'),
     },
-    port: 8082,
+    port: 8083, // Changed port to 8083
     historyApiFallback: true,
     hot: true,
   },
