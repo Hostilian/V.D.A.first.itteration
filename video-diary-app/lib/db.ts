@@ -224,22 +224,32 @@ export const updateVideo = (id: string, updates: { name?: string; description?: 
         );
       },
       (error: Error) => {
+        console.error('Transaction error during update:', error);
+        reject(error);
+      }
+    );
+  });
+};
+
+// Delete video by ID
+export const deleteVideo = (id: string): Promise<boolean> => {
+  return new Promise((resolve, reject) => {
     db.transaction(
-      tx => {
+      (tx: SQLTransaction) => {
         tx.executeSql(
           'DELETE FROM videos WHERE id = ?;',
           [id],
           () => {
             resolve(true);
           },
-          (_, error) => {
+          (_: SQLTransaction, error: Error) => {
             console.error('Error deleting video:', error);
             reject(error);
             return false;
           }
         );
       },
-      error => {
+      (error: Error) => {
         console.error('Transaction error during delete:', error);
         reject(error);
       }
