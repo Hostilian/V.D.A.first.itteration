@@ -163,12 +163,22 @@ export const getVideoById = (id: string): Promise<VideoMetadata | null> => {
                 id: row.id,
                 name: row.name,
                 description: row.description || '',
+                uri: row.uri,
+                duration: row.duration,
+                createdAt: row.createdAt,
+              });
+            } else {
+              resolve(null);
+            }
+          },
+          (_: SQLTransaction, error: Error) => {
+            console.error('Error fetching video by ID:', error);
             reject(error);
             return false;
           }
         );
       },
-      error => {
+      (error: Error) => {
         console.error('Transaction error during fetch by ID:', error);
         reject(error);
       }
@@ -199,25 +209,15 @@ export const updateVideo = (id: string, updates: { name?: string; description?: 
 
   return new Promise((resolve, reject) => {
     db.transaction(
-      tx => {
+      (tx: SQLTransaction) => {
         tx.executeSql(
           `UPDATE videos SET ${fields.join(', ')} WHERE id = ?;`,
           values,
           () => {
             resolve(true);
           },
-          (_, error) => {
+          (_: SQLTransaction, error: Error) => {
             console.error('Error updating video:', error);
-            reject(error);
-            return false;
-          }
-        );
-      },
-      error => {
-        console.error('Transaction error during update:', error);
-        reject(error);
-      }
-    );
   });
 };
 
