@@ -107,49 +107,6 @@ class Transaction {
           }
         }
       }
-      // UPDATE statement
-      else if (normalizedSql.startsWith('update')) {
-        const tableMatch = sqlStatement.match(/update (\w+)/i);
-        if (tableMatch && tableMatch[1]) {
-          const tableName = tableMatch[1];
-
-          if (inMemoryDatabase[tableName]) {
-            // Extract field updates
-            const setMatch = sqlStatement.match(/set ([^;]+?)(?:\s+where|$)/i);
-            if (setMatch && setMatch[1]) {
-              const sets = setMatch[1].split(',').map(s => s.trim());
-              const updateFields: Record<string, any> = {};
-
-              let paramIndex = 0;
-              sets.forEach(set => {
-                const [field] = set.split('=').map(s => s.trim());
-                updateFields[field] = params[paramIndex++];
-              });
-
-              // Handle WHERE clause
-              const whereMatch = sqlStatement.match(/where ([^;]+)/i);
-              if (whereMatch && whereMatch[1]) {
-                const whereClause = whereMatch[1].trim();
-                const idMatch = whereClause.match(/(\w+)\s*=\s*\?/);
-
-                if (idMatch && idMatch[1]) {
-                  const field = idMatch[1];
-                  const value = params[params.length - 1];
-
-                  inMemoryDatabase[tableName] = inMemoryDatabase[tableName].map(record => {
-                    if (record[field] === value) {
-                      return { ...record, ...updateFields };
-                    }
-                    return record;
-                  });
-
-                  console.log(`[WebSQLite] Updated records in ${tableName}`);
-                }
-              }
-            }
-          }
-        }
-      }
       // DELETE statement
       else if (normalizedSql.startsWith('delete')) {
         const tableMatch = sqlStatement.match(/from (\w+)/i);
@@ -230,19 +187,11 @@ class Database {
       }
     }
   }
-
-  // Clear all data (for testing)
-  _reset() {
-    Object.keys(inMemoryDatabase).forEach(key => {
-      delete inMemoryDatabase[key];
-    });
-  }
 }
 
 // Mock SQLite module
 export const WebSQLite = {
   openDatabase: (name: string) => new Database(name),
-  // Add support for the sync version as well
   openDatabaseSync: (name: string) => new Database(name),
 };
 

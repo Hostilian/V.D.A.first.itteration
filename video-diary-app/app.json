@@ -11,18 +11,13 @@
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-    "updates": {
-      "fallbackToCacheTimeout": 0
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select videos",
-        "NSCameraUsageDescription": "This app needs access to your camera to record videos",
-        "NSMicrophoneUsageDescription": "This app needs access to your microphone to record videos"
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to select videos"
       }
     },
     "android": {
