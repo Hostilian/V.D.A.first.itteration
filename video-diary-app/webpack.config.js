@@ -49,12 +49,10 @@ module.exports = async function(env, argv) {
     },
     devServer: {
       static: {
-
-
-
-
-
-
-
-
-};  };    },      compress: true,      historyApiFallback: true,      },        directory: path.join(__dirname, 'web-template'),
+        directory: path.join(__dirname, 'web-template'),
+      },
+      historyApiFallback: true,
+      compress: true,
+    },
+  };
+};
